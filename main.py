@@ -44,3 +44,12 @@ def create_team(team: Team):
 def delete_team(team_name: str):
     teams_collection.delete_one({"name": team_name})
     return {"message": "Team deleted successfully"}
+
+
+@app.put("/teams/{team_name}")
+def update_team(team_name: str, team: Team):
+    teams_collection.update_one(
+        {"name": team_name},
+        {"$set": team.dict()}
+    )
+    return {"message": "Team updated successfully"}

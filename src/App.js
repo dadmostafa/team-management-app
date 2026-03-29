@@ -10,7 +10,43 @@ import GroupsIcon from '@mui/icons-material/Groups';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PersonIcon from '@mui/icons-material/Person';
 
-function TeamCard({ team, onDelete }) {
+function TeamCard({ team, onDelete, onEdit }) {
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({ ...team });
+
+  const handleSave = () => {
+    onEdit(team.name, form);
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <Card elevation={3} sx={{ borderRadius: 3, height: '100%' }}>
+        <CardContent>
+          <Typography variant="h6" fontWeight="bold" gutterBottom color="primary">
+            Edit Team
+          </Typography>
+          <TextField fullWidth label="Team Name" value={form.name}
+            onChange={e => setForm({ ...form, name: e.target.value })}
+            sx={{ mb: 2 }} size="small" />
+          <TextField fullWidth label="Location" value={form.location}
+            onChange={e => setForm({ ...form, location: e.target.value })}
+            sx={{ mb: 2 }} size="small" />
+          <TextField fullWidth label="Members" type="number" value={form.members}
+            onChange={e => setForm({ ...form, members: parseInt(e.target.value) })}
+            sx={{ mb: 2 }} size="small" />
+          <TextField fullWidth label="Team Lead" value={form.lead}
+            onChange={e => setForm({ ...form, lead: e.target.value })}
+            sx={{ mb: 2 }} size="small" />
+        </CardContent>
+        <CardActions>
+          <Button size="small" variant="contained" onClick={handleSave}>Save</Button>
+          <Button size="small" onClick={() => setEditing(false)}>Cancel</Button>
+        </CardActions>
+      </Card>
+    );
+  }
+
   return (
     <Card elevation={3} sx={{ borderRadius: 3, height: '100%' }}>
       <CardContent>
@@ -29,19 +65,14 @@ function TeamCard({ team, onDelete }) {
           <PersonIcon fontSize="small" color="action" />
           <Typography variant="body2" color="text.secondary">{team.lead}</Typography>
         </Box>
-        <Chip label={team.location === 'Remote' ? 'Remote' : 'On-site'} 
-          color={team.location === 'Remote' ? 'success' : 'primary'} 
+        <Chip label={team.location === 'Remote' ? 'Remote' : 'On-site'}
+          color={team.location === 'Remote' ? 'success' : 'primary'}
           size="small" />
       </CardContent>
       <CardActions>
-        <Button
-          size="small"
-          color="error"
-          startIcon={<DeleteIcon />}
-          onClick={() => onDelete(team.name)}
-        >
-          Delete
-        </Button>
+        <Button size="small" color="primary" onClick={() => setEditing(true)}>Edit</Button>
+        <Button size="small" color="error" startIcon={<DeleteIcon />}
+          onClick={() => onDelete(team.name)}>Delete</Button>
       </CardActions>
     </Card>
   );
@@ -81,6 +112,14 @@ function App() {
     fetch(`http://127.0.0.1:8000/teams/${teamName}`, { method: "DELETE" })
       .then(() => fetchTeams());
   };
+
+  const handleEdit = (oldName, updatedTeam) => {
+  fetch(`http://127.0.0.1:8000/teams/${oldName}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updatedTeam),
+  }).then(() => fetchTeams());
+};
 
   const filtered = teams.filter(t =>
     t.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -177,7 +216,7 @@ function App() {
           <Grid container spacing={3}>
             {filtered.map(team => (
               <Grid item xs={12} sm={6} md={4} key={team.name}>
-                <TeamCard team={team} onDelete={handleDelete} />
+                <TeamCard team={team} onDelete={handleDelete} onEdit={handleEdit} />
               </Grid>
             ))}
           </Grid>
