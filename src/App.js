@@ -1,16 +1,49 @@
 import React, { useState, useEffect } from 'react';
+import {
+  AppBar, Toolbar, Typography, Container, Grid, Card, CardContent,
+  CardActions, Button, TextField, Box, Chip, InputAdornment
+} from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
+import AddIcon from '@mui/icons-material/Add';
+import DeleteIcon from '@mui/icons-material/Delete';
+import GroupsIcon from '@mui/icons-material/Groups';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import PersonIcon from '@mui/icons-material/Person';
 
 function TeamCard({ team, onDelete }) {
   return (
-    <div style={styles.card}>
-      <h2 style={styles.teamName}>{team.name}</h2>
-      <p style={styles.detail}>📍 {team.location}</p>
-      <p style={styles.detail}>👥 {team.members} members</p>
-      <p style={styles.detail}>🧑‍💼 Lead: {team.lead}</p>
-      <button style={styles.deleteBtn} onClick={() => onDelete(team.name)}>
-        Delete
-      </button>
-    </div>
+    <Card elevation={3} sx={{ borderRadius: 3, height: '100%' }}>
+      <CardContent>
+        <Typography variant="h6" fontWeight="bold" gutterBottom color="primary">
+          {team.name}
+        </Typography>
+        <Box display="flex" alignItems="center" gap={1} mb={1}>
+          <LocationOnIcon fontSize="small" color="action" />
+          <Typography variant="body2" color="text.secondary">{team.location}</Typography>
+        </Box>
+        <Box display="flex" alignItems="center" gap={1} mb={1}>
+          <GroupsIcon fontSize="small" color="action" />
+          <Typography variant="body2" color="text.secondary">{team.members} members</Typography>
+        </Box>
+        <Box display="flex" alignItems="center" gap={1} mb={2}>
+          <PersonIcon fontSize="small" color="action" />
+          <Typography variant="body2" color="text.secondary">{team.lead}</Typography>
+        </Box>
+        <Chip label={team.location === 'Remote' ? 'Remote' : 'On-site'} 
+          color={team.location === 'Remote' ? 'success' : 'primary'} 
+          size="small" />
+      </CardContent>
+      <CardActions>
+        <Button
+          size="small"
+          color="error"
+          startIcon={<DeleteIcon />}
+          onClick={() => onDelete(team.name)}
+        >
+          Delete
+        </Button>
+      </CardActions>
+    </Card>
   );
 }
 
@@ -55,58 +88,80 @@ function App() {
   );
 
   return (
-    <div style={styles.container}>
-      <h1 style={styles.header}>Team Management App</h1>
-      <p style={styles.subtitle}>ACME Inc. — Team Directory</p>
+    <Box sx={{ flexGrow: 1, minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
+      <AppBar position="static" sx={{ backgroundColor: '#1a1a2e' }}>
+        <Toolbar>
+          <GroupsIcon sx={{ mr: 2 }} />
+          <Typography variant="h6" fontWeight="bold" sx={{ flexGrow: 1 }}>
+            ACME Inc. — Team Management
+          </Typography>
+          <Button
+            color="inherit"
+            startIcon={<AddIcon />}
+            onClick={() => setShowForm(!showForm)}
+            variant={showForm ? 'outlined' : 'text'}
+          >
+            {showForm ? 'Cancel' : 'Add Team'}
+          </Button>
+        </Toolbar>
+      </AppBar>
 
-      <div style={styles.toolbar}>
-        <input
-          style={styles.search}
-          placeholder="Search by name or location..."
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
+
+        {showForm && (
+          <Card elevation={3} sx={{ p: 3, mb: 4, borderRadius: 3 }}>
+            <Typography variant="h6" fontWeight="bold" mb={2}>New Team</Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth label="Team Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth label="Location" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth label="Number of Members" type="number" value={form.members} onChange={e => setForm({ ...form, members: e.target.value })} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField fullWidth label="Team Lead" value={form.lead} onChange={e => setForm({ ...form, lead: e.target.value })} />
+              </Grid>
+              <Grid item xs={12}>
+                <Button variant="contained" sx={{ backgroundColor: '#1a1a2e' }} onClick={handleAdd}>
+                  Save Team
+                </Button>
+              </Grid>
+            </Grid>
+          </Card>
+        )}
+
+        <TextField
+          fullWidth
+          placeholder="Search by team name or location..."
           value={search}
           onChange={e => setSearch(e.target.value)}
+          sx={{ mb: 4, backgroundColor: 'white', borderRadius: 2 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon />
+              </InputAdornment>
+            ),
+          }}
         />
-        <button style={styles.addBtn} onClick={() => setShowForm(!showForm)}>
-          {showForm ? 'Cancel' : '+ Add Team'}
-        </button>
-      </div>
 
-      {showForm && (
-        <div style={styles.form}>
-          <h3 style={{ marginBottom: '12px' }}>New Team</h3>
-          <input style={styles.input} placeholder="Team name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
-          <input style={styles.input} placeholder="Location" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
-          <input style={styles.input} placeholder="Number of members" value={form.members} onChange={e => setForm({ ...form, members: e.target.value })} />
-          <input style={styles.input} placeholder="Team lead name" value={form.lead} onChange={e => setForm({ ...form, lead: e.target.value })} />
-          <button style={styles.addBtn} onClick={handleAdd}>Save Team</button>
-        </div>
-      )}
-
-      {loading ? <p>Loading teams...</p> : (
-        <div style={styles.grid}>
-          {filtered.map(team => (
-            <TeamCard key={team.name} team={team} onDelete={handleDelete} />
-          ))}
-        </div>
-      )}
-    </div>
+        {loading ? (
+          <Typography>Loading teams...</Typography>
+        ) : (
+          <Grid container spacing={3}>
+            {filtered.map(team => (
+              <Grid item xs={12} sm={6} md={4} key={team.name}>
+                <TeamCard team={team} onDelete={handleDelete} />
+              </Grid>
+            ))}
+          </Grid>
+        )}
+      </Container>
+    </Box>
   );
 }
-
-const styles = {
-  container: { fontFamily: 'sans-serif', padding: '40px', backgroundColor: '#f0f2f5', minHeight: '100vh' },
-  header: { color: '#1a1a2e', fontSize: '2rem', marginBottom: '4px' },
-  subtitle: { color: '#555', marginBottom: '24px' },
-  toolbar: { display: 'flex', gap: '12px', marginBottom: '24px' },
-  search: { flex: 1, padding: '10px 16px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem' },
-  addBtn: { padding: '10px 20px', backgroundColor: '#1a1a2e', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '1rem' },
-  form: { backgroundColor: 'white', padding: '24px', borderRadius: '12px', marginBottom: '24px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' },
-  input: { display: 'block', width: '100%', padding: '10px', marginBottom: '12px', borderRadius: '8px', border: '1px solid #ddd', fontSize: '1rem', boxSizing: 'border-box' },
-  grid: { display: 'flex', gap: '20px', flexWrap: 'wrap' },
-  card: { backgroundColor: 'white', borderRadius: '12px', padding: '24px', width: '260px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' },
-  teamName: { color: '#1a1a2e', marginBottom: '12px' },
-  detail: { color: '#444', margin: '6px 0', fontSize: '0.95rem' },
-  deleteBtn: { marginTop: '12px', padding: '6px 14px', backgroundColor: '#e74c3c', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' },
-};
 
 export default App;
