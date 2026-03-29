@@ -36,7 +36,7 @@ A full-stack web application built to solve ACME Inc.'s team management challeng
 cd team-management-app
 python -m uvicorn main:app --reload
 ```
-Backend runs at: http://127.0.0.1:8000
+Backend runs at: http://127.0.0.1:8001
 
 ### 2. Start the Frontend
 ```

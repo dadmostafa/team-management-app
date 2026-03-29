@@ -78,6 +78,8 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
 @app.get("/teams")
 def get_teams(current_user: dict = Depends(get_current_user)):
     teams = list(teams_collection.find({}, {"_id": 0}))
+    for team in teams:
+        team["members"] = len(team.get("team_members", []))
     return {"teams": teams}
 
 @app.post("/teams")
@@ -100,3 +102,37 @@ def update_team(team_name: str, team: Team, current_user: dict = Depends(get_cur
         raise HTTPException(status_code=403, detail="Only admins can update teams")
     teams_collection.update_one({"name": team_name}, {"$set": team.dict()})
     return {"message": "Team updated successfully"}
+
+class Member(BaseModel):
+    name: str
+    role: str
+    location: str
+    is_lead: bool
+    is_direct_staff: bool
+
+@app.post("/teams/{team_name}/members")
+def add_member(team_name: str, member: Member, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can add members")
+    teams_collection.update_one(
+        {"name": team_name},
+        {"$push": {"team_members": member.dict()}}
+    )
+    return {"message": "Member added successfully"}
+
+@app.get("/teams/{team_name}/members")
+def get_members(team_name: str, current_user: dict = Depends(get_current_user)):
+    team = teams_collection.find_one({"name": team_name}, {"_id": 0})
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    return {"members": team.get("team_members", [])}
+
+@app.delete("/teams/{team_name}/members/{member_name}")
+def delete_member(team_name: str, member_name: str, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can delete members")
+    teams_collection.update_one(
+        {"name": team_name},
+        {"$pull": {"team_members": {"name": member_name}}}
+    )
+    return {"message": "Member deleted successfully"}
