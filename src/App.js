@@ -132,7 +132,30 @@ function App() {
             </Grid>
           </Card>
         )}
-
+<Grid container spacing={3} sx={{ mb: 4 }}>
+  <Grid item xs={12} sm={4}>
+    <Card elevation={2} sx={{ borderRadius: 3, textAlign: 'center', p: 2 }}>
+      <Typography variant="h3" fontWeight="bold" color="primary">{teams.length}</Typography>
+      <Typography color="text.secondary">Total Teams</Typography>
+    </Card>
+  </Grid>
+  <Grid item xs={12} sm={4}>
+    <Card elevation={2} sx={{ borderRadius: 3, textAlign: 'center', p: 2 }}>
+      <Typography variant="h3" fontWeight="bold" color="primary">
+        {teams.reduce((sum, t) => sum + t.members, 0)}
+      </Typography>
+      <Typography color="text.secondary">Total Members</Typography>
+    </Card>
+  </Grid>
+  <Grid item xs={12} sm={4}>
+    <Card elevation={2} sx={{ borderRadius: 3, textAlign: 'center', p: 2 }}>
+      <Typography variant="h3" fontWeight="bold" color="success.main">
+        {teams.filter(t => t.location === 'Remote').length}
+      </Typography>
+      <Typography color="text.secondary">Remote Teams</Typography>
+    </Card>
+  </Grid>
+</Grid>
         <TextField
           fullWidth
           placeholder="Search by team name or location..."
