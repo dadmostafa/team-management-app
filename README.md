@@ -1,33 +1,52 @@
-# Team Management App
+# ACME Inc. — Team Management App
 
-A full-stack web application for ACME Inc. to manage teams, members, and achievements.
+A full-stack web application built to solve ACME Inc.'s team management challenges. Allows tracking of teams, members, locations, and achievements across the organization.
+
+## Live Demo
+> Run locally following the instructions below
+
+## Screenshot
+![Team Management App](./screenshot_dashboard.png)
+
+## Business Problems Solved
+- View all teams and their members in one place
+- Track team locations (on-site vs remote)
+- See total member counts across the organization
+- Add and remove teams in real time
 
 ## Tech Stack
-- **Frontend:** React.js
-- **Backend:** Python + FastAPI
-- **Database:** MongoDB (coming soon)
-- **Deployment:** AWS Serverless (coming soon)
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React.js + Material UI |
+| Backend | Python + FastAPI |
+| Database | MongoDB Atlas (AWS) |
+| Version Control | Git + GitHub |
+
+## Features
+- Dashboard with live stats (total teams, members, remote count)
+- Add new teams via form
+- Delete teams
+- Search and filter by name or location
+- Data persisted in MongoDB cloud database
 
 ## How to Run
 
-### Backend
+### 1. Start the Backend
 ```
+cd team-management-app
 python -m uvicorn main:app --reload
 ```
+Backend runs at: http://127.0.0.1:8000
 
-### Frontend
+### 2. Start the Frontend
 ```
 npm start
 ```
+Frontend runs at: http://localhost:3000
 
-## Features
-- View all teams and their details
-- Team lead and member count display
-- Connected frontend and backend
-```
-
-Save and push it:
-```
-git add .
-git commit -m "update README with project description"
-git push
+## API Endpoints
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /teams | Get all teams |
+| POST | /teams | Create a new team |
+| DELETE | /teams/{name} | Delete a team |
