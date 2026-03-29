@@ -1,10 +1,4 @@
-import React from 'react';
-
-const teams = [
-  { id: 1, name: 'Engineering', location: 'New York', members: 8, lead: 'Sarah Johnson' },
-  { id: 2, name: 'Marketing', location: 'London', members: 5, lead: 'James Smith' },
-  { id: 3, name: 'Data Science', location: 'Remote', members: 6, lead: 'Priya Patel' },
-];
+import React, { useState, useEffect } from 'react';
 
 function TeamCard({ team }) {
   return (
@@ -18,15 +12,29 @@ function TeamCard({ team }) {
 }
 
 function App() {
+  const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/teams")
+      .then(res => res.json())
+      .then(data => {
+        setTeams(data.teams);
+        setLoading(false);
+      });
+  }, []);
+
   return (
     <div style={styles.container}>
       <h1 style={styles.header}>Team Management App</h1>
       <p style={styles.subtitle}>ACME Inc. — Team Directory</p>
-      <div style={styles.grid}>
-        {teams.map(team => (
-          <TeamCard key={team.id} team={team} />
-        ))}
-      </div>
+      {loading ? <p>Loading teams...</p> : (
+        <div style={styles.grid}>
+          {teams.map(team => (
+            <TeamCard key={team.id} team={team} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -40,5 +48,3 @@ const styles = {
   teamName: { color: '#1a1a2e', marginBottom: '12px' },
   detail: { color: '#444', margin: '6px 0', fontSize: '0.95rem' },
 };
-
-export default App;
