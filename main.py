@@ -110,6 +110,39 @@ class Member(BaseModel):
     is_lead: bool
     is_direct_staff: bool
 
+class Achievement(BaseModel):
+    title: str
+    description: str
+    month: str
+    year: int
+
+@app.get("/teams/{team_name}/achievements")
+def get_achievements(team_name: str, current_user: dict = Depends(get_current_user)):
+    team = teams_collection.find_one({"name": team_name}, {"_id": 0})
+    if not team:
+        raise HTTPException(status_code=404, detail="Team not found")
+    return {"achievements": team.get("achievements", [])}
+
+@app.post("/teams/{team_name}/achievements")
+def add_achievement(team_name: str, achievement: Achievement, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can add achievements")
+    teams_collection.update_one(
+        {"name": team_name},
+        {"$push": {"achievements": achievement.dict()}}
+    )
+    return {"message": "Achievement added successfully"}
+
+@app.delete("/teams/{team_name}/achievements/{title}")
+def delete_achievement(team_name: str, title: str, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] != "admin":
+        raise HTTPException(status_code=403, detail="Only admins can delete achievements")
+    teams_collection.update_one(
+        {"name": team_name},
+        {"$pull": {"achievements": {"title": title}}}
+    )
+    return {"message": "Achievement deleted successfully"}
+
 @app.post("/teams/{team_name}/members")
 def add_member(team_name: str, member: Member, current_user: dict = Depends(get_current_user)):
     if current_user["role"] != "admin":

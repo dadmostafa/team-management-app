@@ -42,7 +42,7 @@ function LoginPage({ onLogin }) {
           <Typography color="text.secondary">Team Management Portal</Typography>
         </Box>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        <TextField fullWidth label="Username" value={username} onChange={e => setUsername(e.target.value)} sx={{ mb: 2 }} />
+        <TextField fullWidth label="Username" value={username} onChange={e => setUsername(e.target.value)} sx={{ mb: 2 }} onKeyPress={e => e.key === 'Enter' && handleLogin()} />
         <TextField fullWidth label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} sx={{ mb: 3 }} onKeyPress={e => e.key === 'Enter' && handleLogin()} />
         <Button fullWidth variant="contained" size="large" sx={{ backgroundColor: '#1a1a2e' }} onClick={handleLogin}>Sign In</Button>
         <Box mt={2} p={2} sx={{ backgroundColor: '#f5f5f5', borderRadius: 2 }}>
@@ -56,6 +56,10 @@ function LoginPage({ onLogin }) {
 function TeamDetailPage({ team, role, onBack }) {
   const token = localStorage.getItem('token');
   const [members, setMembers] = useState([]);
+  const [achievements, setAchievements] = useState([]);
+  const [activeTab, setActiveTab] = useState('members');
+  const [achieveForm, setAchieveForm] = useState({ title: '', description: '', month: '', year: 2026 });
+  const [showAchieveForm, setShowAchieveForm] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', role: '', location: '', is_lead: false, is_direct_staff: true });
 
@@ -67,7 +71,26 @@ function TeamDetailPage({ team, role, onBack }) {
       .then(data => setMembers(data.members || []));
   };
 
-  useEffect(() => { fetchMembers(); }, []);
+  const fetchAchievements = () => {
+    fetch(`http://127.0.0.1:8001/teams/${team.name}/achievements`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(res => res.json())
+      .then(data => setAchievements(data.achievements || []));
+  };
+
+  useEffect(() => { fetchMembers(); fetchAchievements(); }, []);
+  const handleAddAchievement = () => {
+    fetch(`http://127.0.0.1:8001/teams/${team.name}/achievements`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(achieveForm),
+    }).then(() => {
+      fetchAchievements();
+      setAchieveForm({ title: '', description: '', month: '', year: 2026 });
+      setShowAchieveForm(false);
+    });
+  };
 
   const handleAddMember = () => {
     fetch(`http://127.0.0.1:8001/teams/${team.name}/members`, {
@@ -99,12 +122,15 @@ const nonDirectLeads = Array.isArray(members) ? members.filter(m => m.is_lead &&
           </IconButton>
           <GroupsIcon sx={{ mr: 2 }} />
           <Typography variant="h6" fontWeight="bold" sx={{ flexGrow: 1 }}>
-            {team.name} — Members
+            {team.name}
           </Typography>
-          {role === 'admin' && (
-            <Button color="inherit" startIcon={<AddIcon />} onClick={() => setShowForm(!showForm)}>
-              Add Member
-            </Button>
+          <Button color="inherit" variant={activeTab === 'members' ? 'outlined' : 'text'} onClick={() => setActiveTab('members')} sx={{ mr: 1 }}>Members</Button>
+          <Button color="inherit" variant={activeTab === 'achievements' ? 'outlined' : 'text'} onClick={() => setActiveTab('achievements')}>Achievements</Button>
+          {role === 'admin' && activeTab === 'members' && (
+            <Button color="inherit" startIcon={<AddIcon />} onClick={() => setShowForm(!showForm)} sx={{ ml: 1 }}>Add Member</Button>
+          )}
+          {role === 'admin' && activeTab === 'achievements' && (
+            <Button color="inherit" startIcon={<AddIcon />} onClick={() => setShowAchieveForm(!showAchieveForm)} sx={{ ml: 1 }}>Add Achievement</Button>
           )}
         </Toolbar>
       </AppBar>
@@ -157,46 +183,105 @@ const nonDirectLeads = Array.isArray(members) ? members.filter(m => m.is_lead &&
           </Card>
         )}
 
-        <TableContainer component={Paper} sx={{ borderRadius: 3 }}>
-          <Table>
-            <TableHead sx={{ backgroundColor: '#1a1a2e' }}>
-              <TableRow>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Role</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Location</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Team Lead</TableCell>
-                <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Direct Staff</TableCell>
-                {role === 'admin' && <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Actions</TableCell>}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-                {!Array.isArray(members) || members.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={6} align="center">No members yet — add some!</TableCell>
-                  </TableRow>
-                ) : (
-                  members.map((member, index) => (
-                    <TableRow key={index} hover>
-                      <TableCell>{member.name}</TableCell>
-                      <TableCell>{member.role}</TableCell>
-                      <TableCell>{member.location}</TableCell>
-                      <TableCell>
-                        <Chip label={member.is_lead ? 'Yes' : 'No'} color={member.is_lead ? 'success' : 'default'} size="small" />
-                      </TableCell>
-                      <TableCell>
-                        <Chip label={member.is_direct_staff ? 'Yes' : 'No'} color={member.is_direct_staff ? 'primary' : 'warning'} size="small" />
-                      </TableCell>
-                      {role === 'admin' && (
-                        <TableCell>
-                          <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={() => handleDeleteMember(member.name)}>Delete</Button>
-                        </TableCell>
-                      )}
+        {activeTab === 'members' && (
+          <TableContainer component={Paper} sx={{ borderRadius: 3 }}>
+            <Table>
+              <TableHead sx={{ backgroundColor: '#1a1a2e' }}>
+                <TableRow>
+                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Role</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Location</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Team Lead</TableCell>
+                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Direct Staff</TableCell>
+                  {role === 'admin' && <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Actions</TableCell>}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                  {!Array.isArray(members) || members.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center">No members yet — add some!</TableCell>
                     </TableRow>
-                  ))
-                )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                  ) : (
+                    members.map((member, index) => (
+                      <TableRow key={index} hover>
+                        <TableCell>{member.name}</TableCell>
+                        <TableCell>{member.role}</TableCell>
+                        <TableCell>{member.location}</TableCell>
+                        <TableCell>
+                          <Chip label={member.is_lead ? 'Yes' : 'No'} color={member.is_lead ? 'success' : 'default'} size="small" />
+                        </TableCell>
+                        <TableCell>
+                          <Chip label={member.is_direct_staff ? 'Yes' : 'No'} color={member.is_direct_staff ? 'primary' : 'warning'} size="small" />
+                        </TableCell>
+                        {role === 'admin' && (
+                          <TableCell>
+                            <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={() => handleDeleteMember(member.name)}>Delete</Button>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))
+                  )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+
+        {activeTab === 'achievements' && (
+          <Box>
+            {showAchieveForm && role === 'admin' && (
+              <Card elevation={3} sx={{ p: 3, mb: 4, borderRadius: 3 }}>
+                <Typography variant="h6" fontWeight="bold" mb={2}>New Achievement</Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField fullWidth label="Title" value={achieveForm.title} onChange={e => setAchieveForm({ ...achieveForm, title: e.target.value })} />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField fullWidth label="Month" value={achieveForm.month} onChange={e => setAchieveForm({ ...achieveForm, month: e.target.value })} />
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField fullWidth label="Year" type="number" value={achieveForm.year} onChange={e => setAchieveForm({ ...achieveForm, year: parseInt(e.target.value) })} />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField fullWidth label="Description" multiline rows={2} value={achieveForm.description} onChange={e => setAchieveForm({ ...achieveForm, description: e.target.value })} />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <Button variant="contained" sx={{ backgroundColor: '#1a1a2e' }} onClick={handleAddAchievement}>Save Achievement</Button>
+                  </Grid>
+                </Grid>
+              </Card>
+            )}
+            <Grid container spacing={3}>
+              {achievements.length === 0 ? (
+                <Grid item xs={12}>
+                  <Typography color="text.secondary" textAlign="center">No achievements yet!</Typography>
+                </Grid>
+              ) : (
+                achievements.map((a, index) => (
+                  <Grid item xs={12} sm={6} md={4} key={index}>
+                    <Card elevation={3} sx={{ borderRadius: 3 }}>
+                      <CardContent>
+                        <Chip label={`${a.month} ${a.year}`} color="primary" size="small" sx={{ mb: 1 }} />
+                        <Typography variant="h6" fontWeight="bold">{a.title}</Typography>
+                        <Typography variant="body2" color="text.secondary">{a.description}</Typography>
+                      </CardContent>
+                      {role === 'admin' && (
+                        <CardActions>
+                          <Button size="small" color="error" startIcon={<DeleteIcon />}
+                            onClick={() => {
+                              fetch(`http://127.0.0.1:8001/teams/${team.name}/achievements/${a.title}`, {
+                                method: 'DELETE',
+                                headers: { Authorization: `Bearer ${token}` }
+                              }).then(() => fetchAchievements());
+                            }}>Delete</Button>
+                        </CardActions>
+                      )}
+                    </Card>
+                  </Grid>
+                ))
+              )}
+            </Grid>
+          </Box>
+        )}
       </Container>
     </Box>
   );
@@ -307,7 +392,7 @@ function App() {
     }).then(() => fetchTeams());
   };
 
-  const filtered = teams.filter(t =>
+  const filtered = (teams || []).filter(t =>
     t.name.toLowerCase().includes(search.toLowerCase()) ||
     t.location.toLowerCase().includes(search.toLowerCase())
   );
