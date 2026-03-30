@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import {
   AppBar, Toolbar, Typography, Container, Grid, Card, CardContent,
   CardActions, Button, TextField, Box, Chip, InputAdornment, Alert,
-  Dialog, DialogTitle, DialogContent, DialogActions, FormControlLabel, Switch, Table,
-  TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, IconButton
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
+  Paper, IconButton, FormControlLabel, Switch
 } from '@mui/material';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { motion, AnimatePresence } from 'framer-motion';
 import SearchIcon from '@mui/icons-material/Search';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -13,6 +15,44 @@ import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PersonIcon from '@mui/icons-material/Person';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+
+
+const theme = createTheme({
+  palette: {
+    primary: { main: '#6C63FF' },
+    secondary: { main: '#FF6584' },
+    background: { default: '#F0F4FF' },
+  },
+  shape: { borderRadius: 16 },
+  typography: {
+    fontFamily: '"Inter", "Roboto", sans-serif',
+    h6: { fontWeight: 700 },
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          borderRadius: 12,
+          fontWeight: 600,
+          transition: 'all 0.2s ease',
+        },
+      },
+    },
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          borderRadius: 20,
+          border: '1px solid rgba(108, 99, 255, 0.1)',
+        },
+      },
+    },
+  },
+});
+
+const MotionCard = motion(Card);
+const MotionBox = motion(Box);
 
 function LoginPage({ onLogin }) {
   const [username, setUsername] = useState('');
@@ -34,22 +74,65 @@ function LoginPage({ onLogin }) {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <Card elevation={4} sx={{ p: 4, borderRadius: 3, width: '100%', maxWidth: 400 }}>
-        <Box display="flex" flexDirection="column" alignItems="center" mb={3}>
-          <LockOutlinedIcon sx={{ fontSize: 48, color: '#1a1a2e', mb: 1 }} />
-          <Typography variant="h5" fontWeight="bold">ACME Inc.</Typography>
-          <Typography color="text.secondary">Team Management Portal</Typography>
-        </Box>
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        <TextField fullWidth label="Username" value={username} onChange={e => setUsername(e.target.value)} sx={{ mb: 2 }} onKeyPress={e => e.key === 'Enter' && handleLogin()} />
-        <TextField fullWidth label="Password" type="password" value={password} onChange={e => setPassword(e.target.value)} sx={{ mb: 3 }} onKeyPress={e => e.key === 'Enter' && handleLogin()} />
-        <Button fullWidth variant="contained" size="large" sx={{ backgroundColor: '#1a1a2e' }} onClick={handleLogin}>Sign In</Button>
-        <Box mt={2} p={2} sx={{ backgroundColor: '#f5f5f5', borderRadius: 2 }}>
-          <Typography variant="caption" color="text.secondary">Admin: admin / admin123 — Viewer: viewer / viewer123</Typography>
-        </Box>
-      </Card>
+    <Box sx={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #6C63FF 0%, #FF6584 100%)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center'
+    }}>
+      <MotionBox
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        sx={{ width: '100%', maxWidth: 420, px: 2 }}
+      >
+        <Card elevation={0} sx={{ p: 4, borderRadius: 4, backdropFilter: 'blur(20px)', background: 'rgba(255,255,255,0.95)' }}>
+          <Box display="flex" flexDirection="column" alignItems="center" mb={3}>
+            <Box sx={{ background: 'linear-gradient(135deg, #6C63FF, #FF6584)', borderRadius: '50%', p: 2, mb: 2 }}>
+              <LockOutlinedIcon sx={{ fontSize: 36, color: 'white' }} />
+            </Box>
+            <Typography variant="h4" fontWeight="800" sx={{ background: 'linear-gradient(135deg, #6C63FF, #FF6584)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              ACME Inc.
+            </Typography>
+            <Typography color="text.secondary" mt={0.5}>Team Management Portal</Typography>
+          </Box>
+          {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>}
+          <TextField fullWidth label="Username" value={username}
+            onChange={e => setUsername(e.target.value)}
+            onKeyPress={e => e.key === 'Enter' && handleLogin()}
+            sx={{ mb: 2 }} />
+          <TextField fullWidth label="Password" type="password" value={password}
+            onChange={e => setPassword(e.target.value)}
+            onKeyPress={e => e.key === 'Enter' && handleLogin()}
+            sx={{ mb: 3 }} />
+          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+            <Button fullWidth variant="contained" size="large"
+              sx={{ background: 'linear-gradient(135deg, #6C63FF, #FF6584)', py: 1.5, fontSize: '1rem' }}
+              onClick={handleLogin}>
+              Sign In
+            </Button>
+          </motion.div>
+          <Box mt={2} p={2} sx={{ backgroundColor: '#F0F4FF', borderRadius: 2 }}>
+            <Typography variant="caption" color="text.secondary">
+              Admin: admin / admin123 — Viewer: viewer / viewer123
+            </Typography>
+          </Box>
+        </Card>
+      </MotionBox>
     </Box>
+  );
+}
+
+function StatCard({ value, label, color }) {
+  return (
+    <MotionCard
+      elevation={0}
+      whileHover={{ y: -4, boxShadow: '0 12px 40px rgba(108,99,255,0.15)' }}
+      transition={{ duration: 0.2 }}
+      sx={{ textAlign: 'center', p: 2 }}
+    >
+      <Typography variant="h3" fontWeight="800" sx={{ color }}>{value}</Typography>
+      <Typography color="text.secondary" fontWeight={500}>{label}</Typography>
+    </MotionCard>
   );
 }
 
@@ -58,244 +141,212 @@ function TeamDetailPage({ team, role, onBack }) {
   const [members, setMembers] = useState([]);
   const [achievements, setAchievements] = useState([]);
   const [activeTab, setActiveTab] = useState('members');
-  const [achieveForm, setAchieveForm] = useState({ title: '', description: '', month: '', year: 2026 });
-  const [showAchieveForm, setShowAchieveForm] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [showAchieveForm, setShowAchieveForm] = useState(false);
   const [form, setForm] = useState({ name: '', role: '', location: '', is_lead: false, is_direct_staff: true });
+  const [achieveForm, setAchieveForm] = useState({ title: '', description: '', month: '', year: 2026 });
 
   const fetchMembers = () => {
     fetch(`http://127.0.0.1:8001/teams/${team.name}/members`, {
       headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.json())
-      .then(data => setMembers(data.members || []));
+    }).then(res => res.json()).then(data => setMembers(data.members || []));
   };
 
   const fetchAchievements = () => {
     fetch(`http://127.0.0.1:8001/teams/${team.name}/achievements`, {
       headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(res => res.json())
-      .then(data => setAchievements(data.achievements || []));
+    }).then(res => res.json()).then(data => setAchievements(data.achievements || []));
   };
 
   useEffect(() => { fetchMembers(); fetchAchievements(); }, []);
-  const handleAddAchievement = () => {
-    fetch(`http://127.0.0.1:8001/teams/${team.name}/achievements`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(achieveForm),
-    }).then(() => {
-      fetchAchievements();
-      setAchieveForm({ title: '', description: '', month: '', year: 2026 });
-      setShowAchieveForm(false);
-    });
-  };
 
   const handleAddMember = () => {
     fetch(`http://127.0.0.1:8001/teams/${team.name}/members`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(form),
-    }).then(() => {
-      fetchMembers();
-      setForm({ name: '', role: '', location: '', is_lead: false, is_direct_staff: true });
-      setShowForm(false);
-    });
+    }).then(() => { fetchMembers(); setForm({ name: '', role: '', location: '', is_lead: false, is_direct_staff: true }); setShowForm(false); });
   };
 
   const handleDeleteMember = (memberName) => {
     fetch(`http://127.0.0.1:8001/teams/${team.name}/members/${memberName}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` }
+      method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
     }).then(() => fetchMembers());
   };
 
+  const handleAddAchievement = () => {
+    fetch(`http://127.0.0.1:8001/teams/${team.name}/achievements`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(achieveForm),
+    }).then(() => { fetchAchievements(); setAchieveForm({ title: '', description: '', month: '', year: 2026 }); setShowAchieveForm(false); });
+  };
+
   const coLocated = Array.isArray(members) ? members.filter(m => m.location === team.location).length : 0;
-const nonDirectLeads = Array.isArray(members) ? members.filter(m => m.is_lead && !m.is_direct_staff).length : 0;
+  const nonDirectLeads = Array.isArray(members) ? members.filter(m => m.is_lead && !m.is_direct_staff).length : 0;
+
   return (
-    <Box sx={{ flexGrow: 1, minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      <AppBar position="static" sx={{ backgroundColor: '#1a1a2e' }}>
-        <Toolbar>
-          <IconButton color="inherit" onClick={onBack} sx={{ mr: 2 }}>
-            <ArrowBackIcon />
-          </IconButton>
-          <GroupsIcon sx={{ mr: 2 }} />
-          <Typography variant="h6" fontWeight="bold" sx={{ flexGrow: 1 }}>
-            {team.name}
-          </Typography>
-          <Button color="inherit" variant={activeTab === 'members' ? 'outlined' : 'text'} onClick={() => setActiveTab('members')} sx={{ mr: 1 }}>Members</Button>
-          <Button color="inherit" variant={activeTab === 'achievements' ? 'outlined' : 'text'} onClick={() => setActiveTab('achievements')}>Achievements</Button>
-          {role === 'admin' && activeTab === 'members' && (
-            <Button color="inherit" startIcon={<AddIcon />} onClick={() => setShowForm(!showForm)} sx={{ ml: 1 }}>Add Member</Button>
-          )}
-          {role === 'admin' && activeTab === 'achievements' && (
-            <Button color="inherit" startIcon={<AddIcon />} onClick={() => setShowAchieveForm(!showAchieveForm)} sx={{ ml: 1 }}>Add Achievement</Button>
-          )}
-        </Toolbar>
-      </AppBar>
-
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={4}>
-            <Card elevation={2} sx={{ borderRadius: 3, textAlign: 'center', p: 2 }}>
-              <Typography variant="h3" fontWeight="bold" color="primary">{members.length}</Typography>
-              <Typography color="text.secondary">Total Members</Typography>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Card elevation={2} sx={{ borderRadius: 3, textAlign: 'center', p: 2 }}>
-              <Typography variant="h3" fontWeight="bold" color="success.main">{coLocated}</Typography>
-              <Typography color="text.secondary">Co-located with Team</Typography>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Card elevation={2} sx={{ borderRadius: 3, textAlign: 'center', p: 2 }}>
-              <Typography variant="h3" fontWeight="bold" color="warning.main">{nonDirectLeads}</Typography>
-              <Typography color="text.secondary">Non-direct Staff Leads</Typography>
-            </Card>
-          </Grid>
-        </Grid>
-
-        {showForm && role === 'admin' && (
-          <Card elevation={3} sx={{ p: 3, mb: 4, borderRadius: 3 }}>
-            <Typography variant="h6" fontWeight="bold" mb={2}>New Member</Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Full Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Role / Title" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Location" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} />
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <FormControlLabel control={<Switch checked={form.is_lead} onChange={e => setForm({ ...form, is_lead: e.target.checked })} />} label="Team Lead" />
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <FormControlLabel control={<Switch checked={form.is_direct_staff} onChange={e => setForm({ ...form, is_direct_staff: e.target.checked })} />} label="Direct Staff" />
-              </Grid>
-              <Grid item xs={12}>
-                <Button variant="contained" sx={{ backgroundColor: '#1a1a2e' }} onClick={handleAddMember}>Save Member</Button>
-              </Grid>
-            </Grid>
-          </Card>
-        )}
-
-        {activeTab === 'members' && (
-          <TableContainer component={Paper} sx={{ borderRadius: 3 }}>
-            <Table>
-              <TableHead sx={{ backgroundColor: '#1a1a2e' }}>
-                <TableRow>
-                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Name</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Role</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Location</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Team Lead</TableCell>
-                  <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Direct Staff</TableCell>
-                  {role === 'admin' && <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>Actions</TableCell>}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                  {!Array.isArray(members) || members.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} align="center">No members yet — add some!</TableCell>
-                    </TableRow>
-                  ) : (
-                    members.map((member, index) => (
-                      <TableRow key={index} hover>
-                        <TableCell>{member.name}</TableCell>
-                        <TableCell>{member.role}</TableCell>
-                        <TableCell>{member.location}</TableCell>
-                        <TableCell>
-                          <Chip label={member.is_lead ? 'Yes' : 'No'} color={member.is_lead ? 'success' : 'default'} size="small" />
-                        </TableCell>
-                        <TableCell>
-                          <Chip label={member.is_direct_staff ? 'Yes' : 'No'} color={member.is_direct_staff ? 'primary' : 'warning'} size="small" />
-                        </TableCell>
-                        {role === 'admin' && (
-                          <TableCell>
-                            <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={() => handleDeleteMember(member.name)}>Delete</Button>
-                          </TableCell>
-                        )}
-                      </TableRow>
-                    ))
-                  )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-
-        {activeTab === 'achievements' && (
-          <Box>
-            {showAchieveForm && role === 'admin' && (
-              <Card elevation={3} sx={{ p: 3, mb: 4, borderRadius: 3 }}>
-                <Typography variant="h6" fontWeight="bold" mb={2}>New Achievement</Typography>
-                <Grid container spacing={2}>
-                  <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="Title" value={achieveForm.title} onChange={e => setAchieveForm({ ...achieveForm, title: e.target.value })} />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="Month" value={achieveForm.month} onChange={e => setAchieveForm({ ...achieveForm, month: e.target.value })} />
-                  </Grid>
-                  <Grid item xs={12} sm={6}>
-                    <TextField fullWidth label="Year" type="number" value={achieveForm.year} onChange={e => setAchieveForm({ ...achieveForm, year: parseInt(e.target.value) })} />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <TextField fullWidth label="Description" multiline rows={2} value={achieveForm.description} onChange={e => setAchieveForm({ ...achieveForm, description: e.target.value })} />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Button variant="contained" sx={{ backgroundColor: '#1a1a2e' }} onClick={handleAddAchievement}>Save Achievement</Button>
-                  </Grid>
-                </Grid>
-              </Card>
+    <ThemeProvider theme={theme}>
+      <Box sx={{ flexGrow: 1, minHeight: '100vh', backgroundColor: '#F0F4FF' }}>
+        <AppBar position="static" elevation={0} sx={{ background: 'linear-gradient(135deg, #6C63FF 0%, #FF6584 100%)' }}>
+          <Toolbar>
+            <IconButton color="inherit" onClick={onBack} sx={{ mr: 2 }}>
+              <ArrowBackIcon />
+            </IconButton>
+            <GroupsIcon sx={{ mr: 1 }} />
+            <Typography variant="h6" sx={{ flexGrow: 1 }}>{team.name}</Typography>
+            <Button color="inherit" variant={activeTab === 'members' ? 'outlined' : 'text'}
+              onClick={() => setActiveTab('members')} sx={{ mr: 1, borderColor: 'rgba(255,255,255,0.5)' }}>
+              Members
+            </Button>
+            <Button color="inherit" variant={activeTab === 'achievements' ? 'outlined' : 'text'}
+              onClick={() => setActiveTab('achievements')} sx={{ mr: 1, borderColor: 'rgba(255,255,255,0.5)' }}
+              startIcon={<EmojiEventsIcon />}>
+              Achievements
+            </Button>
+            {role === 'admin' && activeTab === 'members' && (
+              <Button color="inherit" startIcon={<AddIcon />} onClick={() => setShowForm(!showForm)}>Add Member</Button>
             )}
-            <Grid container spacing={3}>
-              {achievements.length === 0 ? (
-                <Grid item xs={12}>
-                  <Typography color="text.secondary" textAlign="center">No achievements yet!</Typography>
-                </Grid>
-              ) : (
-                achievements.map((a, index) => (
-                  <Grid item xs={12} sm={6} md={4} key={index}>
-                    <Card elevation={3} sx={{ borderRadius: 3 }}>
-                      <CardContent>
-                        <Chip label={`${a.month} ${a.year}`} color="primary" size="small" sx={{ mb: 1 }} />
-                        <Typography variant="h6" fontWeight="bold">{a.title}</Typography>
-                        <Typography variant="body2" color="text.secondary">{a.description}</Typography>
-                      </CardContent>
-                      {role === 'admin' && (
-                        <CardActions>
-                          <Button size="small" color="error" startIcon={<DeleteIcon />}
-                            onClick={() => {
-                              fetch(`http://127.0.0.1:8001/teams/${team.name}/achievements/${a.title}`, {
-                                method: 'DELETE',
-                                headers: { Authorization: `Bearer ${token}` }
-                              }).then(() => fetchAchievements());
-                            }}>Delete</Button>
-                        </CardActions>
-                      )}
-                    </Card>
-                  </Grid>
-                ))
-              )}
+            {role === 'admin' && activeTab === 'achievements' && (
+              <Button color="inherit" startIcon={<AddIcon />} onClick={() => setShowAchieveForm(!showAchieveForm)}>Add Achievement</Button>
+            )}
+          </Toolbar>
+        </AppBar>
+
+        <Container maxWidth="lg" sx={{ mt: 4 }}>
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} sm={4}>
+              <StatCard value={members.length} label="Total Members" color="#6C63FF" />
             </Grid>
-          </Box>
-        )}
-      </Container>
-    </Box>
+            <Grid item xs={12} sm={4}>
+              <StatCard value={coLocated} label="Co-located with Team" color="#4CAF50" />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <StatCard value={nonDirectLeads} label="Non-direct Staff Leads" color="#FF9800" />
+            </Grid>
+          </Grid>
+
+          {activeTab === 'members' && (
+            <MotionBox initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+              {showForm && role === 'admin' && (
+                <Card elevation={0} sx={{ p: 3, mb: 4 }}>
+                  <Typography variant="h6" mb={2}>New Member</Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}><TextField fullWidth label="Full Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></Grid>
+                    <Grid item xs={12} sm={6}><TextField fullWidth label="Role / Title" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })} /></Grid>
+                    <Grid item xs={12} sm={6}><TextField fullWidth label="Location" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} /></Grid>
+                    <Grid item xs={12} sm={3}><FormControlLabel control={<Switch checked={form.is_lead} onChange={e => setForm({ ...form, is_lead: e.target.checked })} color="primary" />} label="Team Lead" /></Grid>
+                    <Grid item xs={12} sm={3}><FormControlLabel control={<Switch checked={form.is_direct_staff} onChange={e => setForm({ ...form, is_direct_staff: e.target.checked })} color="primary" />} label="Direct Staff" /></Grid>
+                    <Grid item xs={12}>
+                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={{ display: 'inline-block' }}>
+                        <Button variant="contained" onClick={handleAddMember} sx={{ background: 'linear-gradient(135deg, #6C63FF, #FF6584)' }}>Save Member</Button>
+                      </motion.div>
+                    </Grid>
+                  </Grid>
+                </Card>
+              )}
+              <TableContainer component={Paper} elevation={0} sx={{ borderRadius: 4, border: '1px solid rgba(108,99,255,0.1)' }}>
+                <Table>
+                  <TableHead sx={{ background: 'linear-gradient(135deg, #6C63FF 0%, #FF6584 100%)' }}>
+                    <TableRow>
+                      {['Name', 'Role', 'Location', 'Team Lead', 'Direct Staff', role === 'admin' ? 'Actions' : ''].map(h => (
+                        <TableCell key={h} sx={{ color: 'white', fontWeight: 700 }}>{h}</TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {!Array.isArray(members) || members.length === 0 ? (
+                      <TableRow><TableCell colSpan={6} align="center" sx={{ py: 4, color: 'text.secondary' }}>No members yet — add some!</TableCell></TableRow>
+                    ) : (
+                      members.map((member, index) => (
+                        <TableRow key={index} hover sx={{ '&:hover': { backgroundColor: 'rgba(108,99,255,0.04)' } }}>
+                          <TableCell fontWeight={600}>{member.name}</TableCell>
+                          <TableCell>{member.role}</TableCell>
+                          <TableCell>{member.location}</TableCell>
+                          <TableCell><Chip label={member.is_lead ? 'Yes' : 'No'} color={member.is_lead ? 'success' : 'default'} size="small" /></TableCell>
+                          <TableCell><Chip label={member.is_direct_staff ? 'Yes' : 'No'} color={member.is_direct_staff ? 'primary' : 'warning'} size="small" /></TableCell>
+                          {role === 'admin' && (
+                            <TableCell>
+                              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} style={{ display: 'inline-block' }}>
+                                <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={() => handleDeleteMember(member.name)}>Delete</Button>
+                              </motion.div>
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </MotionBox>
+          )}
+
+          {activeTab === 'achievements' && (
+            <MotionBox initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+              {showAchieveForm && role === 'admin' && (
+                <Card elevation={0} sx={{ p: 3, mb: 4 }}>
+                  <Typography variant="h6" mb={2}>New Achievement</Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}><TextField fullWidth label="Title" value={achieveForm.title} onChange={e => setAchieveForm({ ...achieveForm, title: e.target.value })} /></Grid>
+                    <Grid item xs={12} sm={6}><TextField fullWidth label="Month" value={achieveForm.month} onChange={e => setAchieveForm({ ...achieveForm, month: e.target.value })} /></Grid>
+                    <Grid item xs={12} sm={6}><TextField fullWidth label="Year" type="number" value={achieveForm.year} onChange={e => setAchieveForm({ ...achieveForm, year: parseInt(e.target.value) })} /></Grid>
+                    <Grid item xs={12}><TextField fullWidth label="Description" multiline rows={2} value={achieveForm.description} onChange={e => setAchieveForm({ ...achieveForm, description: e.target.value })} /></Grid>
+                    <Grid item xs={12}>
+                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={{ display: 'inline-block' }}>
+                        <Button variant="contained" onClick={handleAddAchievement} sx={{ background: 'linear-gradient(135deg, #6C63FF, #FF6584)' }}>Save Achievement</Button>
+                      </motion.div>
+                    </Grid>
+                  </Grid>
+                </Card>
+              )}
+              <Grid container spacing={3}>
+                {achievements.length === 0 ? (
+                  <Grid item xs={12}><Typography color="text.secondary" textAlign="center" py={4}>No achievements yet!</Typography></Grid>
+                ) : (
+                  achievements.map((a, index) => (
+                    <Grid item xs={12} sm={6} md={4} key={index}>
+                      <MotionCard elevation={0} whileHover={{ y: -4, boxShadow: '0 12px 40px rgba(108,99,255,0.15)' }} transition={{ duration: 0.2 }}>
+                        <CardContent>
+                          <Box display="flex" alignItems="center" gap={1} mb={1}>
+                            <EmojiEventsIcon sx={{ color: '#FFD700' }} />
+                            <Chip label={`${a.month} ${a.year}`} size="small" sx={{ background: 'linear-gradient(135deg, #6C63FF, #FF6584)', color: 'white' }} />
+                          </Box>
+                          <Typography variant="h6" fontWeight={700}>{a.title}</Typography>
+                          <Typography variant="body2" color="text.secondary" mt={1}>{a.description}</Typography>
+                        </CardContent>
+                        {role === 'admin' && (
+                          <CardActions>
+                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} style={{ display: 'inline-block' }}>
+                              <Button size="small" color="error" startIcon={<DeleteIcon />}
+                                onClick={() => {
+                                  fetch(`http://127.0.0.1:8001/teams/${team.name}/achievements/${a.title}`, {
+                                    method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+                                  }).then(() => fetchAchievements());
+                                }}>Delete</Button>
+                            </motion.div>
+                          </CardActions>
+                        )}
+                      </MotionCard>
+                    </Grid>
+                  ))
+                )}
+              </Grid>
+            </MotionBox>
+          )}
+        </Container>
+      </Box>
+    </ThemeProvider>
   );
 }
 
 function TeamCard({ team, onDelete, onEdit, onViewMembers, role }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ ...team });
-
   const handleSave = () => { onEdit(team.name, form); setEditing(false); };
 
   if (editing) {
     return (
-      <Card elevation={3} sx={{ borderRadius: 3, height: '100%' }}>
+      <MotionCard elevation={0} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
         <CardContent>
           <Typography variant="h6" fontWeight="bold" gutterBottom color="primary">Edit Team</Typography>
           <TextField fullWidth label="Team Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} sx={{ mb: 2 }} size="small" />
@@ -304,39 +355,62 @@ function TeamCard({ team, onDelete, onEdit, onViewMembers, role }) {
           <TextField fullWidth label="Team Lead" value={form.lead} onChange={e => setForm({ ...form, lead: e.target.value })} sx={{ mb: 2 }} size="small" />
         </CardContent>
         <CardActions>
-          <Button size="small" variant="contained" onClick={handleSave}>Save</Button>
+          <Button size="small" variant="contained" onClick={handleSave} sx={{ background: 'linear-gradient(135deg, #6C63FF, #FF6584)' }}>Save</Button>
           <Button size="small" onClick={() => setEditing(false)}>Cancel</Button>
         </CardActions>
-      </Card>
+      </MotionCard>
     );
   }
 
   return (
-    <Card elevation={3} sx={{ borderRadius: 3, height: '100%' }}>
+    <MotionCard
+      elevation={0}
+      whileHover={{ y: -6, boxShadow: '0 20px 60px rgba(108,99,255,0.2)' }}
+      transition={{ duration: 0.25 }}
+    >
       <CardContent>
-        <Typography variant="h6" fontWeight="bold" gutterBottom color="primary">{team.name}</Typography>
+        <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
+          <Typography variant="h6" fontWeight="800" color="primary">{team.name}</Typography>
+          <Chip
+            label={team.location === 'Remote' ? 'Remote' : 'On-site'}
+            size="small"
+            sx={{
+              background: team.location === 'Remote' ? 'linear-gradient(135deg, #4CAF50, #8BC34A)' : 'linear-gradient(135deg, #6C63FF, #FF6584)',
+              color: 'white', fontWeight: 600
+            }}
+          />
+        </Box>
         <Box display="flex" alignItems="center" gap={1} mb={1}>
-          <LocationOnIcon fontSize="small" color="action" />
+          <LocationOnIcon fontSize="small" sx={{ color: '#6C63FF' }} />
           <Typography variant="body2" color="text.secondary">{team.location}</Typography>
         </Box>
         <Box display="flex" alignItems="center" gap={1} mb={1}>
-          <GroupsIcon fontSize="small" color="action" />
+          <GroupsIcon fontSize="small" sx={{ color: '#6C63FF' }} />
           <Typography variant="body2" color="text.secondary">{team.members} members</Typography>
         </Box>
-        <Box display="flex" alignItems="center" gap={1} mb={2}>
-          <PersonIcon fontSize="small" color="action" />
+        <Box display="flex" alignItems="center" gap={1}>
+          <PersonIcon fontSize="small" sx={{ color: '#6C63FF' }} />
           <Typography variant="body2" color="text.secondary">{team.lead}</Typography>
         </Box>
-        <Chip label={team.location === 'Remote' ? 'Remote' : 'On-site'} color={team.location === 'Remote' ? 'success' : 'primary'} size="small" />
       </CardContent>
-      <CardActions>
-        <Button size="small" variant="outlined" onClick={() => onViewMembers(team)}>View Members</Button>
+      <CardActions sx={{ px: 2, pb: 2 }}>
+        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+          <Button size="small" variant="contained"
+            sx={{ background: 'linear-gradient(135deg, #6C63FF, #FF6584)', mr: 1 }}
+            onClick={() => onViewMembers(team)}>
+            View Team
+          </Button>
+        </motion.div>
         {role === 'admin' && <>
-          <Button size="small" color="primary" onClick={() => setEditing(true)}>Edit</Button>
-          <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={() => onDelete(team.name)}>Delete</Button>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button size="small" variant="outlined" color="primary" onClick={() => setEditing(true)} sx={{ mr: 1 }}>Edit</Button>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={() => onDelete(team.name)}>Delete</Button>
+          </motion.div>
         </>}
       </CardActions>
-    </Card>
+    </MotionCard>
   );
 }
 
@@ -349,13 +423,12 @@ function App() {
   const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem('token'));
   const [role, setRole] = useState(localStorage.getItem('role') || '');
   const [selectedTeam, setSelectedTeam] = useState(null);
-
   const token = localStorage.getItem('token');
 
   const fetchTeams = () => {
     fetch("http://127.0.0.1:8001/teams", { headers: { Authorization: `Bearer ${token}` } })
       .then(res => res.json())
-      .then(data => { setTeams(data.teams); setLoading(false); });
+      .then(data => { setTeams(data.teams || []); setLoading(false); });
   };
 
   useEffect(() => { if (loggedIn) fetchTeams(); }, [loggedIn]);
@@ -397,80 +470,97 @@ function App() {
     t.location.toLowerCase().includes(search.toLowerCase())
   );
 
-  if (!loggedIn) return <LoginPage onLogin={handleLogin} />;
-
-  if (selectedTeam) return (
-    <TeamDetailPage team={selectedTeam} role={role} token={token} onBack={() => setSelectedTeam(null)} />
-  );
+  if (!loggedIn) return <ThemeProvider theme={theme}><LoginPage onLogin={handleLogin} /></ThemeProvider>;
+  if (selectedTeam) return <ThemeProvider theme={theme}><TeamDetailPage team={selectedTeam} role={role} onBack={() => setSelectedTeam(null)} /></ThemeProvider>;
 
   return (
-    <Box sx={{ flexGrow: 1, minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      <AppBar position="static" sx={{ backgroundColor: '#1a1a2e' }}>
-        <Toolbar>
-          <GroupsIcon sx={{ mr: 2 }} />
-          <Typography variant="h6" fontWeight="bold" sx={{ flexGrow: 1 }}>ACME Inc. — Team Management</Typography>
-          <Chip label={role.toUpperCase()} color="warning" size="small" sx={{ mr: 2 }} />
-          {role === 'admin' && (
-            <Button color="inherit" startIcon={<AddIcon />} onClick={() => setShowForm(!showForm)}>
-              {showForm ? 'Cancel' : 'Add Team'}
-            </Button>
-          )}
-          <Button color="inherit" onClick={handleLogout}>Logout</Button>
-        </Toolbar>
-      </AppBar>
+    <ThemeProvider theme={theme}>
+      <Box sx={{ flexGrow: 1, minHeight: '100vh', backgroundColor: '#F0F4FF' }}>
+        <AppBar position="static" elevation={0} sx={{ background: 'linear-gradient(135deg, #6C63FF 0%, #FF6584 100%)' }}>
+          <Toolbar>
+            <GroupsIcon sx={{ mr: 2 }} />
+            <Typography variant="h6" sx={{ flexGrow: 1 }}>ACME Inc. — Team Management</Typography>
+            <Chip label={role.toUpperCase()} size="small" sx={{ mr: 2, backgroundColor: 'rgba(255,255,255,0.2)', color: 'white', fontWeight: 700 }} />
+            {role === 'admin' && (
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button color="inherit" startIcon={<AddIcon />} onClick={() => setShowForm(!showForm)} sx={{ mr: 1 }}>
+                  {showForm ? 'Cancel' : 'Add Team'}
+                </Button>
+              </motion.div>
+            )}
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button color="inherit" onClick={handleLogout}>Logout</Button>
+            </motion.div>
+          </Toolbar>
+        </AppBar>
 
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
-        {showForm && role === 'admin' && (
-          <Card elevation={3} sx={{ p: 3, mb: 4, borderRadius: 3 }}>
-            <Typography variant="h6" fontWeight="bold" mb={2}>New Team</Typography>
-            <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}><TextField fullWidth label="Team Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></Grid>
-              <Grid item xs={12} sm={6}><TextField fullWidth label="Location" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} /></Grid>
-              <Grid item xs={12} sm={6}><TextField fullWidth label="Number of Members" type="number" value={form.members} onChange={e => setForm({ ...form, members: e.target.value })} /></Grid>
-              <Grid item xs={12} sm={6}><TextField fullWidth label="Team Lead" value={form.lead} onChange={e => setForm({ ...form, lead: e.target.value })} /></Grid>
-              <Grid item xs={12}><Button variant="contained" sx={{ backgroundColor: '#1a1a2e' }} onClick={handleAdd}>Save Team</Button></Grid>
+        <Container maxWidth="lg" sx={{ mt: 4 }}>
+          <AnimatePresence>
+            {showForm && role === 'admin' && (
+              <MotionBox
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Card elevation={0} sx={{ p: 3, mb: 4 }}>
+                  <Typography variant="h6" mb={2}>New Team</Typography>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}><TextField fullWidth label="Team Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></Grid>
+                    <Grid item xs={12} sm={6}><TextField fullWidth label="Location" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} /></Grid>
+                    <Grid item xs={12} sm={6}><TextField fullWidth label="Number of Members" type="number" value={form.members} onChange={e => setForm({ ...form, members: e.target.value })} /></Grid>
+                    <Grid item xs={12} sm={6}><TextField fullWidth label="Team Lead" value={form.lead} onChange={e => setForm({ ...form, lead: e.target.value })} /></Grid>
+                    <Grid item xs={12}>
+                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={{ display: 'inline-block' }}>
+                        <Button variant="contained" onClick={handleAdd} sx={{ background: 'linear-gradient(135deg, #6C63FF, #FF6584)' }}>Save Team</Button>
+                      </motion.div>
+                    </Grid>
+                  </Grid>
+                </Card>
+              </MotionBox>
+            )}
+          </AnimatePresence>
+
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+            <Grid item xs={12} sm={4}>
+              <StatCard value={teams.length} label="Total Teams" color="#6C63FF" />
             </Grid>
-          </Card>
-        )}
+            <Grid item xs={12} sm={4}>
+              <StatCard value={teams.reduce((sum, t) => sum + (t.members || 0), 0)} label="Total Members" color="#6C63FF" />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <StatCard value={teams.filter(t => t.location === 'Remote').length} label="Remote Teams" color="#4CAF50" />
+            </Grid>
+          </Grid>
 
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={4}>
-            <Card elevation={2} sx={{ borderRadius: 3, textAlign: 'center', p: 2 }}>
-              <Typography variant="h3" fontWeight="bold" color="primary">{teams.length}</Typography>
-              <Typography color="text.secondary">Total Teams</Typography>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Card elevation={2} sx={{ borderRadius: 3, textAlign: 'center', p: 2 }}>
-              <Typography variant="h3" fontWeight="bold" color="primary">{teams.reduce((sum, t) => sum + t.members, 0)}</Typography>
-              <Typography color="text.secondary">Total Members</Typography>
-            </Card>
-          </Grid>
-          <Grid item xs={12} sm={4}>
-            <Card elevation={2} sx={{ borderRadius: 3, textAlign: 'center', p: 2 }}>
-              <Typography variant="h3" fontWeight="bold" color="success.main">{teams.filter(t => t.location === 'Remote').length}</Typography>
-              <Typography color="text.secondary">Remote Teams</Typography>
-            </Card>
-          </Grid>
-        </Grid>
+          <TextField fullWidth placeholder="Search by team name or location..."
+            value={search} onChange={e => setSearch(e.target.value)}
+            sx={{ mb: 4, backgroundColor: 'white', borderRadius: 3 }}
+            InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon sx={{ color: '#6C63FF' }} /></InputAdornment> }}
+          />
 
-        <TextField fullWidth placeholder="Search by team name or location..."
-          value={search} onChange={e => setSearch(e.target.value)}
-          sx={{ mb: 4, backgroundColor: 'white', borderRadius: 2 }}
-          InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon /></InputAdornment> }}
-        />
-
-        {loading ? <Typography>Loading teams...</Typography> : (
-          <Grid container spacing={3}>
-            {filtered.map(team => (
-              <Grid item xs={12} sm={6} md={4} key={team.name}>
-                <TeamCard team={team} onDelete={handleDelete} onEdit={handleEdit} onViewMembers={setSelectedTeam} role={role} />
-              </Grid>
-            ))}
-          </Grid>
-        )}
-      </Container>
-    </Box>
+          {loading ? (
+            <Typography textAlign="center" color="text.secondary">Loading teams...</Typography>
+          ) : (
+            <Grid container spacing={3}>
+              <AnimatePresence>
+                {filtered.map((team, index) => (
+                  <Grid item xs={12} sm={6} md={4} key={team.name}>
+                    <MotionBox
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3, delay: index * 0.1 }}
+                    >
+                      <TeamCard team={team} onDelete={handleDelete} onEdit={handleEdit} onViewMembers={setSelectedTeam} role={role} />
+                    </MotionBox>
+                  </Grid>
+                ))}
+              </AnimatePresence>
+            </Grid>
+          )}
+        </Container>
+      </Box>
+    </ThemeProvider>
   );
 }
 
