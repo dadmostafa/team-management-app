@@ -1,0 +1,39 @@
+{
+    "FunctionName": "team-management-api",
+    "FunctionArn": "arn:aws:lambda:us-east-1:747938282886:function:team-management-api",
+    "Runtime": "python3.12",
+    "Role": "arn:aws:iam::747938282886:role/lambda-role",
+    "Handler": "main.handler",
+    "CodeSize": 10783435,
+    "Description": "",
+    "Timeout": 30,
+    "MemorySize": 256,
+    "LastModified": "2026-04-01T20:10:43.840+0000",
+    "CodeSha256": "2BXAqgj//GvegZMqG80kd40W1pUqHh4jv1Wp+lclGlk=",
+    "Version": "$LATEST",
+    "TracingConfig": {
+        "Mode": "PassThrough"
+    },
+    "RevisionId": "526bca32-ef20-46e8-8793-2777ab954f09",
+    "State": "Pending",
+    "StateReason": "The function is being created.",
+    "StateReasonCode": "Creating",
+    "PackageType": "Zip",
+    "Architectures": [
+        "x86_64"
+    ],
+    "EphemeralStorage": {
+        "Size": 512
+    },
+    "SnapStart": {
+        "ApplyOn": "None",
+        "OptimizationStatus": "Off"
+    },
+    "RuntimeVersionConfig": {
+        "RuntimeVersionArn": "arn:aws:lambda:us-east-1::runtime:ffd8d8a0ee4551835e06b2706a3a0b06584e348ae2397a7414e9fda79f0976a0"
+    },
+    "LoggingConfig": {
+        "LogFormat": "Text",
+        "LogGroup": "/aws/lambda/team-management-api"
+    }
+}

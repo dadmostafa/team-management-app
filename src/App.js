@@ -63,7 +63,7 @@ function LoginPage({ onLogin }) {
     const formData = new FormData();
     formData.append('username', username);
     formData.append('password', password);
-    fetch('http://127.0.0.1:8001/login', { method: 'POST', body: formData })
+    fetch('https://9sb0c46a2c.execute-api.us-east-1.amazonaws.com/login', { method: 'POST', body: formData })
       .then(res => { if (!res.ok) throw new Error(); return res.json(); })
       .then(data => {
         localStorage.setItem('token', data.access_token);
@@ -147,13 +147,13 @@ function TeamDetailPage({ team, role, onBack }) {
   const [achieveForm, setAchieveForm] = useState({ title: '', description: '', month: '', year: 2026 });
 
   const fetchMembers = () => {
-    fetch(`http://127.0.0.1:8001/teams/${team.name}/members`, {
+    fetch(`https://9sb0c46a2c.execute-api.us-east-1.amazonaws.com/teams/${team.name}/members`, {
       headers: { Authorization: `Bearer ${token}` }
     }).then(res => res.json()).then(data => setMembers(data.members || []));
   };
 
   const fetchAchievements = () => {
-    fetch(`http://127.0.0.1:8001/teams/${team.name}/achievements`, {
+    fetch(`https://9sb0c46a2c.execute-api.us-east-1.amazonaws.com/teams/${team.name}/achievements`, {
       headers: { Authorization: `Bearer ${token}` }
     }).then(res => res.json()).then(data => setAchievements(data.achievements || []));
   };
@@ -161,7 +161,7 @@ function TeamDetailPage({ team, role, onBack }) {
   useEffect(() => { fetchMembers(); fetchAchievements(); }, []);
 
   const handleAddMember = () => {
-    fetch(`http://127.0.0.1:8001/teams/${team.name}/members`, {
+    fetch(`https://9sb0c46a2c.execute-api.us-east-1.amazonaws.com/teams/${team.name}/members`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(form),
@@ -169,13 +169,13 @@ function TeamDetailPage({ team, role, onBack }) {
   };
 
   const handleDeleteMember = (memberName) => {
-    fetch(`http://127.0.0.1:8001/teams/${team.name}/members/${memberName}`, {
+    fetch(`https://9sb0c46a2c.execute-api.us-east-1.amazonaws.com/teams/${team.name}/members/${memberName}`, {
       method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
     }).then(() => fetchMembers());
   };
 
   const handleAddAchievement = () => {
-    fetch(`http://127.0.0.1:8001/teams/${team.name}/achievements`, {
+    fetch(`https://9sb0c46a2c.execute-api.us-east-1.amazonaws.com/teams/${team.name}/achievements`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify(achieveForm),
@@ -319,7 +319,7 @@ function TeamDetailPage({ team, role, onBack }) {
                             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} style={{ display: 'inline-block' }}>
                               <Button size="small" color="error" startIcon={<DeleteIcon />}
                                 onClick={() => {
-                                  fetch(`http://127.0.0.1:8001/teams/${team.name}/achievements/${a.title}`, {
+                                  fetch(`https://9sb0c46a2c.execute-api.us-east-1.amazonaws.com/teams/${team.name}/achievements/${a.title}`, {
                                     method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
                                   }).then(() => fetchAchievements());
                                 }}>Delete</Button>
@@ -426,7 +426,7 @@ function App() {
   const token = localStorage.getItem('token');
 
   const fetchTeams = () => {
-    fetch("http://127.0.0.1:8001/teams", { headers: { Authorization: `Bearer ${token}` } })
+    fetch("https://9sb0c46a2c.execute-api.us-east-1.amazonaws.com/teams", { headers: { Authorization: `Bearer ${token}` } })
       .then(res => res.json())
       .then(data => { setTeams(data.teams || []); setLoading(false); });
   };
@@ -445,7 +445,7 @@ function App() {
   };
 
   const handleAdd = () => {
-    fetch("http://127.0.0.1:8001/teams", {
+    fetch("https://9sb0c46a2c.execute-api.us-east-1.amazonaws.com/teams", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ ...form, members: parseInt(form.members) }),
@@ -453,12 +453,12 @@ function App() {
   };
 
   const handleDelete = (teamName) => {
-    fetch(`http://127.0.0.1:8001/teams/${teamName}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } })
+    fetch(`https://9sb0c46a2c.execute-api.us-east-1.amazonaws.com/teams/${teamName}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } })
       .then(() => fetchTeams());
   };
 
   const handleEdit = (oldName, updatedTeam) => {
-    fetch(`http://127.0.0.1:8001/teams/${oldName}`, {
+    fetch(`https://9sb0c46a2c.execute-api.us-east-1.amazonaws.com/teams/${oldName}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify(updatedTeam),
