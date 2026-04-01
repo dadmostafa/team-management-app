@@ -42,7 +42,7 @@ Backend runs at: http://127.0.0.1:8001
 ```
 npm start
 ```
-Frontend runs at: http://localhost:3000
+Frontend runs at: http://localhost:3001
 
 ## API Endpoints
 | Method | Endpoint | Description |
