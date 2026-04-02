@@ -1,16 +1,42 @@
+import os
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 from pymongo import MongoClient
 from pydantic import BaseModel
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 from datetime import datetime, timedelta
 import certifi
 
 
 
 app = FastAPI()
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error": True,
+            "message": "Validation error",
+            "details": str(exc.errors())
+        }
+    )
+
+@app.exception_handler(Exception)
+async def general_exception_handler(request, exc):
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": True,
+            "message": "Internal server error",
+            "details": str(exc)
+        }
+    )
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,8 +46,20 @@ app.add_middleware(
 )
 
 # MongoDB connection with lazy initialization
+IS_LOCAL = os.environ.get("IS_LOCAL", "true").lower() == "true"
+
+if IS_LOCAL:
+    MONGO_URI = "mongodb+srv://mostafa_CITI:X0n8BpLFE1xF821a@team-management-cluster.zegijnq.mongodb.net/?appName=team-management-cluster"
+else:
+    MONGO_HOST = os.environ.get("MONGO_HOST", "")
+    MONGO_PORT = os.environ.get("MONGO_PORT", "27017")
+    MONGO_NAME = os.environ.get("MONGO_NAME", "")
+    MONGO_USER = os.environ.get("MONGO_USER", "")
+    MONGO_PASS = os.environ.get("MONGO_PASS", "")
+    MONGO_URI = f"mongodb://{MONGO_USER}:{MONGO_PASS}@{MONGO_HOST}:{MONGO_PORT}/{MONGO_NAME}?tls=true&tlsAllowInvalidCertificates=true&retryWrites=false"
+
 client = MongoClient(
-    "mongodb+srv://mostafa_CITI:X0n8BpLFE1xF821a@team-management-cluster.zegijnq.mongodb.net/?appName=team-management-cluster",
+    MONGO_URI,
     tlsCAFile=certifi.where(),
     serverSelectionTimeoutMS=5000,
     connect=False
@@ -74,12 +112,22 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 USERS = {
     "admin": {
         "username": "admin",
-        "password": "admin123",
+        "password": pwd_context.hash("admin123"),
         "role": "admin"
     },
+    "manager": {
+        "username": "manager",
+        "password": pwd_context.hash("manager123"),
+        "role": "manager"
+    },
+    "contributor": {
+        "username": "contributor",
+        "password": pwd_context.hash("contributor123"),
+        "role": "contributor"
+    },
     "viewer": {
-        "username": "viewer", 
-        "password": "viewer123",
+        "username": "viewer",
+        "password": pwd_context.hash("viewer123"),
         "role": "viewer"
     }
 }
@@ -103,13 +151,13 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         role = payload.get("role")
         return {"username": username, "role": role}
     except JWTError:
-        raise HTTPException(status_code=401, detail="Invalid token")
+        raise HTTPException(status_code=401, detail={"error": True, "message": "Invalid token"})
 
 @app.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user = USERS.get(form_data.username)
-    if not user or user["password"] != form_data.password:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+    if not user or not pwd_context.verify(form_data.password, user["password"]):
+        raise HTTPException(status_code=401, detail={"error": True, "message": "Invalid credentials"})
     token = create_token({"sub": user["username"], "role": user["role"]})
     return {"access_token": token, "token_type": "bearer", "role": user["role"]}
 @app.get("/teams")
@@ -122,10 +170,10 @@ def get_teams(current_user: dict = Depends(get_current_user)):
         pass
     return {"teams": in_memory_teams}
 
-@app.post("/teams")
+@app.post("/teams", status_code=201)
 def create_team(team: Team, current_user: dict = Depends(get_current_user)):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can create teams")
+    if current_user["role"] not in ["admin", "manager", "contributor"]:
+        raise HTTPException(status_code=403, detail={"error": True, "message": "Not authorized to create or update"})
     try:
         if mongodb_available:
             teams_collection.insert_one(team.dict())
@@ -136,10 +184,10 @@ def create_team(team: Team, current_user: dict = Depends(get_current_user)):
     in_memory_teams.append(team.dict())
     return {"message": "Team created successfully"}
 
-@app.delete("/teams/{team_name}")
+@app.delete("/teams/{team_name}", status_code=204)
 def delete_team(team_name: str, current_user: dict = Depends(get_current_user)):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can delete teams")
+    if current_user["role"] not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail={"error": True, "message": "Not authorized to delete"})
     try:
         if mongodb_available:
             teams_collection.delete_one({"name": team_name})
@@ -153,8 +201,8 @@ def delete_team(team_name: str, current_user: dict = Depends(get_current_user)):
 
 @app.put("/teams/{team_name}")
 def update_team(team_name: str, team: Team, current_user: dict = Depends(get_current_user)):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can update teams")
+    if current_user["role"] not in ["admin", "manager", "contributor"]:
+        raise HTTPException(status_code=403, detail={"error": True, "message": "Not authorized to create or update"})
     try:
         if mongodb_available:
             teams_collection.update_one({"name": team_name}, {"$set": team.dict()})
@@ -193,10 +241,10 @@ def get_achievements(team_name: str, current_user: dict = Depends(get_current_us
     # Fallback to in-memory
     return {"achievements": team_achievements_storage.get(team_name, [])}
 
-@app.post("/teams/{team_name}/achievements")
+@app.post("/teams/{team_name}/achievements", status_code=201)
 def add_achievement(team_name: str, achievement: Achievement, current_user: dict = Depends(get_current_user)):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can add achievements")
+    if current_user["role"] not in ["admin", "manager", "contributor"]:
+        raise HTTPException(status_code=403, detail={"error": True, "message": "Not authorized to create or update"})
     try:
         if mongodb_available:
             teams_collection.update_one(
@@ -212,10 +260,10 @@ def add_achievement(team_name: str, achievement: Achievement, current_user: dict
     team_achievements_storage[team_name].append(achievement.dict())
     return {"message": "Achievement added successfully"}
 
-@app.delete("/teams/{team_name}/achievements/{title}")
+@app.delete("/teams/{team_name}/achievements/{title}", status_code=204)
 def delete_achievement(team_name: str, title: str, current_user: dict = Depends(get_current_user)):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can delete achievements")
+    if current_user["role"] not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail={"error": True, "message": "Not authorized to delete"})
     try:
         if mongodb_available:
             teams_collection.update_one(
@@ -230,10 +278,10 @@ def delete_achievement(team_name: str, title: str, current_user: dict = Depends(
         team_achievements_storage[team_name] = [a for a in team_achievements_storage[team_name] if a["title"] != title]
     return {"message": "Achievement deleted successfully"}
 
-@app.post("/teams/{team_name}/members")
+@app.post("/teams/{team_name}/members", status_code=201)
 def add_member(team_name: str, member: Member, current_user: dict = Depends(get_current_user)):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can add members")
+    if current_user["role"] not in ["admin", "manager", "contributor"]:
+        raise HTTPException(status_code=403, detail={"error": True, "message": "Not authorized to create or update"})
     try:
         if mongodb_available:
             teams_collection.update_one(
@@ -261,10 +309,10 @@ def get_members(team_name: str, current_user: dict = Depends(get_current_user)):
     # Fallback to in-memory
     return {"members": team_members_storage.get(team_name, [])}
 
-@app.delete("/teams/{team_name}/members/{member_name}")
+@app.delete("/teams/{team_name}/members/{member_name}", status_code=204)
 def delete_member(team_name: str, member_name: str, current_user: dict = Depends(get_current_user)):
-    if current_user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can delete members")
+    if current_user["role"] not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail={"error": True, "message": "Not authorized to delete"})
     try:
         if mongodb_available:
             teams_collection.update_one(

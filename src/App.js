@@ -113,7 +113,7 @@ function LoginPage({ onLogin }) {
           </motion.div>
           <Box mt={2} p={2} sx={{ backgroundColor: '#F0F4FF', borderRadius: 2 }}>
             <Typography variant="caption" color="text.secondary">
-              Admin: admin / admin123 — Viewer: viewer / viewer123
+              Admin: admin / admin123 — Manager: manager / manager123 — Contributor: contributor / contributor123 — Viewer: viewer / viewer123
             </Typography>
           </Box>
         </Card>
