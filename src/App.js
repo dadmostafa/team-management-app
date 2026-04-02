@@ -555,7 +555,7 @@ function App() {
           <Toolbar>
             <GroupsIcon sx={{ mr: 2 }} />
             <Typography variant="h6" sx={{ flexGrow: 1 }}>
-              ACME Inc. — Team Management
+              Citi Team Management
               {selectedDept !== 'All' && (
                 <Chip
                   label={`Filtering: ${selectedDept}`}
@@ -707,7 +707,7 @@ function App() {
             )}
           </AnimatePresence>
 
-          <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid container spacing={3} sx={{ mb: 4 }} justifyContent="center">
             <Grid item xs={12} sm={4}>
               <StatCard value={teams.length} label="Total Teams" color="#6C63FF" />
             </Grid>
@@ -720,7 +720,7 @@ function App() {
           </Grid>
 
           {departments.length > 0 && (
-            <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid container spacing={2} sx={{ mb: 3 }} justifyContent="center">
               {departments.map(d => (
                 <Grid item xs={12} sm={6} md={4} key={d.name}>
                   <MotionCard elevation={4}
