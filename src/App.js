@@ -536,15 +536,18 @@ function App() {
         <AppBar position="static" elevation={0} sx={{ background: 'linear-gradient(135deg, #6C63FF 0%, #FF6584 100%)' }}>
           <Toolbar>
             <GroupsIcon sx={{ mr: 2 }} />
-            <Typography variant="h6" sx={{ flexGrow: 1 }}>ACME Inc. — Team Management</Typography>
+            <Typography variant="h6" sx={{ flexGrow: 1 }}>
+              ACME Inc. — Team Management
+              {selectedDept !== 'All' && (
+                <Chip
+                  label={`Filtering: ${selectedDept}`}
+                  size="small"
+                  onDelete={() => setSelectedDept('All')}
+                  sx={{ ml: 2, backgroundColor: 'rgba(255,255,255,0.3)', color: 'white', fontWeight: 600 }}
+                />
+              )}
+            </Typography>
             <Chip label={role.toUpperCase()} size="small" sx={{ mr: 2, backgroundColor: 'rgba(255,255,255,0.2)', color: 'white', fontWeight: 700 }} />
-            {role === 'admin' && (
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button color="inherit" onClick={() => setShowDeptForm(!showDeptForm)} sx={{ mr: 1 }}>
-                  Departments
-                </Button>
-              </motion.div>
-            )}
             {role === 'admin' && (
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button color="inherit" variant="outlined"
