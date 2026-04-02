@@ -1,6 +1,8 @@
 import os
 import hashlib
-from fastapi import FastAPI, HTTPException, Depends
+import logging
+import time
+from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.responses import JSONResponse
@@ -10,6 +12,9 @@ from pydantic import BaseModel
 from jose import JWTError, jwt
 from datetime import datetime, timedelta
 import certifi
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("team-management-api")
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
@@ -45,12 +50,36 @@ async def general_exception_handler(request, exc):
 
 app.add_middleware(
     CORSMiddleware,
-   allow_origins=["*"],
+    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# MongoDB connection — URI must be set in Lambda environment variables
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start = time.time()
+    # Extract bearer token subject (username) if present
+    auth = request.headers.get("Authorization", "")
+    user = "anonymous"
+    if auth.startswith("Bearer "):
+        try:
+            payload = jwt.decode(auth[7:], SECRET_KEY, algorithms=[ALGORITHM])
+            user = payload.get("sub", "unknown")
+        except Exception:
+            user = "invalid-token"
+    response = await call_next(request)
+    duration_ms = round((time.time() - start) * 1000)
+    logger.info(
+        "%s %s — user=%s status=%s duration=%dms",
+        request.method,
+        request.url.path,
+        user,
+        response.status_code,
+        duration_ms,
+    )
+    return response
+
+# MongoDB connection
 MONGO_URI = os.environ.get("MONGO_URI")
 if not MONGO_URI:
     raise RuntimeError("MONGO_URI environment variable is not set")
