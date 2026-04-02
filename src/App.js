@@ -681,7 +681,7 @@ function App() {
           </DialogActions>
         </Dialog>
 
-        <Container maxWidth="lg" sx={{ mt: 4 }}>
+        <Container maxWidth="xl" sx={{ mt: 4, px: { xs: 2, md: 4 } }}>
           <AnimatePresence>
             {showForm && role === 'admin' && (
               <MotionBox
@@ -696,31 +696,6 @@ function App() {
                     <Grid item xs={12} sm={6}><TextField fullWidth label="Team Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} error={!!formErrors.name} helperText={formErrors.name} /></Grid>
                     <Grid item xs={12} sm={6}><TextField fullWidth label="Location" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} error={!!formErrors.location} helperText={formErrors.location} /></Grid>
                     <Grid item xs={12} sm={6}><TextField fullWidth label="Team Lead" value={form.lead} onChange={e => setForm({ ...form, lead: e.target.value })} error={!!formErrors.lead} helperText={formErrors.lead} /></Grid>
-                    <Grid item xs={12} sm={6}>
-                      <FormControl fullWidth>
-                        <InputLabel>Department</InputLabel>
-                        <Select value={form.department || ''} label="Department"
-                          onChange={e => setForm({ ...form, department: e.target.value })}>
-                          {departments.map(d => (
-                            <MenuItem key={d.name} value={d.name}>{d.name}</MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <FormControl fullWidth>
-                        <InputLabel>Department</InputLabel>
-                        <Select
-                          value={form.department || ''}
-                          label="Department"
-                          onChange={e => setForm({ ...form, department: e.target.value })}
-                        >
-                          {departments.map(d => (
-                            <MenuItem key={d.name} value={d.name}>{d.name}</MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
                     <Grid item xs={12}>
                       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={{ display: 'inline-block' }}>
                         <Button variant="contained" onClick={handleAdd} sx={{ background: 'linear-gradient(135deg, #6C63FF, #FF6584)' }}>Save Team</Button>
@@ -782,7 +757,7 @@ function App() {
             <Grid container spacing={3}>
               <AnimatePresence>
                 {filtered.map((team, index) => (
-                  <Grid item xs={12} sm={6} md={4} key={team.name}>
+                  <Grid item xs={12} sm={6} md={6} key={team.name}>
                     <MotionBox
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
