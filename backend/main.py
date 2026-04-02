@@ -50,11 +50,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# MongoDB connection with lazy initialization
-MONGO_URI = os.environ.get(
-    "MONGO_URI",
-    "mongodb+srv://mostafa_CITI:X0n8BpLFE1xF821a@team-management-cluster.zegijnq.mongodb.net/?appName=team-management-cluster"
-)
+# MongoDB connection — URI must be set in Lambda environment variables
+MONGO_URI = os.environ.get("MONGO_URI")
+if not MONGO_URI:
+    raise RuntimeError("MONGO_URI environment variable is not set")
 
 client = MongoClient(
     MONGO_URI,
@@ -74,7 +73,7 @@ if departments_collection.count_documents({}) == 0:
         {"name": "Mortgages Dev"}
     ])
 
-# In-memory fallback storage
+
 in_memory_teams = [
     {"id": 1, "name": "Engineering", "location": "New York", "members": 8, "lead": "Sarah Johnson"},
     {"id": 2, "name": "Marketing", "location": "London", "members": 5, "lead": "James Smith"},
@@ -95,7 +94,7 @@ team_members_storage = {
 team_achievements_storage = {}
 mongodb_available = False
 
-# Try to initialize MongoDB
+
 try:
     client.admin.command('ping')
     mongodb_available = True
