@@ -3,7 +3,8 @@ import {
   AppBar, Toolbar, Typography, Container, Grid, Card, CardContent,
   CardActions, Button, TextField, Box, Chip, InputAdornment, Alert,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
-  Paper, IconButton, FormControlLabel, Switch
+  Paper, IconButton, FormControlLabel, Switch, Select, MenuItem,
+  InputLabel, FormControl, Tabs, Tab, Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -208,6 +209,20 @@ function TeamDetailPage({ team, role, onBack }) {
               startIcon={<EmojiEventsIcon />}>
               Achievements
             </Button>
+            {role === 'admin' && activeTab === 'members' && members.length > 0 && (
+              <Button color="inherit" onClick={() => {
+                const newLead = prompt('Enter new team lead name:');
+                if (newLead) {
+                  fetch(`https://9sb0c46a2c.execute-api.us-east-1.amazonaws.com/teams/${team.name}/lead`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ lead: newLead })
+                  }).then(() => fetchMembers());
+                }
+              }}>
+                Change Lead
+              </Button>
+            )}
             {role === 'admin' && activeTab === 'members' && (
               <Button color="inherit" startIcon={<AddIcon />} onClick={() => setShowForm(!showForm)}>Add Member</Button>
             )}
@@ -384,6 +399,13 @@ function TeamCard({ team, onDelete, onEdit, onViewMembers, role }) {
             }}
           />
         </Box>
+        {team.department && (
+          <Chip
+            label={team.department}
+            size="small"
+            sx={{ background: 'linear-gradient(135deg, #6C63FF, #FF6584)', color: 'white', fontWeight: 600, mb: 1 }}
+          />
+        )}
         <Box display="flex" alignItems="center" gap={1} mb={1}>
           <LocationOnIcon fontSize="small" sx={{ color: '#6C63FF' }} />
           <Typography variant="body2" color="text.secondary">{team.location}</Typography>
@@ -428,6 +450,10 @@ function App() {
   const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem('token'));
   const [role, setRole] = useState(localStorage.getItem('role') || '');
   const [selectedTeam, setSelectedTeam] = useState(null);
+  const [departments, setDepartments] = useState([]);
+  const [selectedDept, setSelectedDept] = useState('All');
+  const [newDeptName, setNewDeptName] = useState('');
+  const [showDeptForm, setShowDeptForm] = useState(false);
   const token = localStorage.getItem('token');
 
   const fetchTeams = () => {
@@ -436,7 +462,20 @@ function App() {
       .then(data => { setTeams(data.teams || []); setLoading(false); });
   };
 
-  useEffect(() => { if (loggedIn) fetchTeams(); }, [loggedIn]);
+  const fetchDepartments = () => {
+    fetch("https://9sb0c46a2c.execute-api.us-east-1.amazonaws.com/departments", {
+        headers: { Authorization: `Bearer ${token}` }
+    })
+    .then(res => res.json())
+    .then(data => setDepartments(data.departments || []));
+  };
+
+  useEffect(() => { 
+    if (loggedIn) {
+        fetchTeams();
+        fetchDepartments();
+    }
+  }, [loggedIn]);
 
   const handleLogin = (userRole) => { setRole(userRole); setLoggedIn(true); };
 
@@ -482,8 +521,9 @@ function App() {
   };
 
   const filtered = (teams || []).filter(t =>
-    t.name.toLowerCase().includes(search.toLowerCase()) ||
-    t.location.toLowerCase().includes(search.toLowerCase())
+    (t.name.toLowerCase().includes(search.toLowerCase()) ||
+    t.location.toLowerCase().includes(search.toLowerCase())) &&
+    (selectedDept === 'All' || t.department === selectedDept)
   );
 
   if (!loggedIn) return <ThemeProvider theme={theme}><LoginPage onLogin={handleLogin} /></ThemeProvider>;
@@ -497,6 +537,13 @@ function App() {
             <GroupsIcon sx={{ mr: 2 }} />
             <Typography variant="h6" sx={{ flexGrow: 1 }}>ACME Inc. — Team Management</Typography>
             <Chip label={role.toUpperCase()} size="small" sx={{ mr: 2, backgroundColor: 'rgba(255,255,255,0.2)', color: 'white', fontWeight: 700 }} />
+            {role === 'admin' && (
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button color="inherit" onClick={() => setShowDeptForm(!showDeptForm)} sx={{ mr: 1 }}>
+                  Departments
+                </Button>
+              </motion.div>
+            )}
             {role === 'admin' && (
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button color="inherit" startIcon={<AddIcon />} onClick={() => setShowForm(!showForm)} sx={{ mr: 1 }}>
@@ -526,6 +573,20 @@ function App() {
                     <Grid item xs={12} sm={6}><TextField fullWidth label="Location" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} error={!!formErrors.location} helperText={formErrors.location} /></Grid>
                     <Grid item xs={12} sm={6}><TextField fullWidth label="Number of Members" type="number" value={form.members} onChange={e => setForm({ ...form, members: e.target.value })} error={!!formErrors.members} helperText={formErrors.members} /></Grid>
                     <Grid item xs={12} sm={6}><TextField fullWidth label="Team Lead" value={form.lead} onChange={e => setForm({ ...form, lead: e.target.value })} error={!!formErrors.lead} helperText={formErrors.lead} /></Grid>
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth>
+                        <InputLabel>Department</InputLabel>
+                        <Select
+                          value={form.department || ''}
+                          label="Department"
+                          onChange={e => setForm({ ...form, department: e.target.value })}
+                        >
+                          {departments.map(d => (
+                            <MenuItem key={d.name} value={d.name}>{d.name}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
                     <Grid item xs={12}>
                       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={{ display: 'inline-block' }}>
                         <Button variant="contained" onClick={handleAdd} sx={{ background: 'linear-gradient(135deg, #6C63FF, #FF6584)' }}>Save Team</Button>

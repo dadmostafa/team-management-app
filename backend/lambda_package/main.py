@@ -64,6 +64,15 @@ client = MongoClient(
 )
 db = client["team_management"]
 teams_collection = db["teams"]
+departments_collection = db["departments"]
+
+# Seed default departments
+if departments_collection.count_documents({}) == 0:
+    departments_collection.insert_many([
+        {"name": "Credit Card Dev"},
+        {"name": "Car Loan Dev"},
+        {"name": "Mortgages Dev"}
+    ])
 
 # In-memory fallback storage
 in_memory_teams = [
@@ -119,6 +128,7 @@ class Team(BaseModel):
     location: str
     members: int
     lead: str
+    department: str = ""
 
 def create_token(data: dict):
     to_encode = data.copy()
@@ -230,6 +240,9 @@ class Achievement(BaseModel):
     month: str
     year: int
 
+class Department(BaseModel):
+    name: str
+
 @app.get("/teams/{team_name}/achievements")
 def get_achievements(team_name: str, current_user: dict = Depends(get_current_user)):
     try:
@@ -327,6 +340,58 @@ def delete_member(team_name: str, member_name: str, current_user: dict = Depends
     if team_name in team_members_storage:
         team_members_storage[team_name] = [m for m in team_members_storage[team_name] if m["name"] != member_name]
     return {"message": "Member deleted successfully"}
+
+@app.get("/departments")
+def get_departments(current_user: dict = Depends(get_current_user)):
+    try:
+        if mongodb_available:
+            departments = list(departments_collection.find({}, {"_id": 0}))
+            return {"departments": departments}
+    except:
+        pass
+    return {"departments": [
+        {"name": "Credit Card Dev"},
+        {"name": "Car Loan Dev"},
+        {"name": "Mortgages Dev"}
+    ]}
+
+@app.post("/departments", status_code=201)
+def create_department(department: Department, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail={"error": True, "message": "Not authorized"})
+    try:
+        if mongodb_available:
+            departments_collection.insert_one(department.dict())
+            return {"message": "Department created successfully"}
+    except:
+        pass
+    return {"message": "Department created successfully"}
+
+@app.delete("/departments/{dept_name}", status_code=204)
+def delete_department(dept_name: str, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail={"error": True, "message": "Not authorized"})
+    try:
+        if mongodb_available:
+            departments_collection.delete_one({"name": dept_name})
+    except:
+        pass
+
+@app.put("/teams/{team_name}/lead", status_code=200)
+def update_team_lead(team_name: str, body: dict, current_user: dict = Depends(get_current_user)):
+    if current_user["role"] not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail={"error": True, "message": "Not authorized"})
+    new_lead = body.get("lead")
+    try:
+        if mongodb_available:
+            teams_collection.update_one(
+                {"name": team_name},
+                {"$set": {"lead": new_lead}}
+            )
+            return {"message": "Team lead updated successfully"}
+    except:
+        pass
+    return {"message": "Team lead updated successfully"}
 
 from mangum import Mangum
 handler = Mangum(app)
