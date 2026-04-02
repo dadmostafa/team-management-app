@@ -126,7 +126,6 @@ USERS = {
 class Team(BaseModel):
     name: str
     location: str
-    members: int
     lead: str
     department: str = ""
 
@@ -183,15 +182,17 @@ def get_team(team_name: str, current_user: dict = Depends(get_current_user)):
 
 @app.post("/teams", status_code=201)
 def create_team(team: Team, current_user: dict = Depends(get_current_user)):
-    if current_user["role"] not in ["admin", "manager", "contributor"]:
-        raise HTTPException(status_code=403, detail={"error": True, "message": "Not authorized to create or update"})
+    if current_user["role"] not in ["admin", "manager"]:
+        raise HTTPException(status_code=403, detail={"error": True, "message": "Not authorized"})
     try:
         if mongodb_available:
-            teams_collection.insert_one(team.dict())
+            team_dict = team.dict()
+            team_dict["team_members"] = []
+            team_dict["members"] = 0
+            teams_collection.insert_one(team_dict)
             return {"message": "Team created successfully"}
     except:
         pass
-    # Fallback to in-memory
     in_memory_teams.append(team.dict())
     return {"message": "Team created successfully"}
 

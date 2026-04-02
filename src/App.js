@@ -464,7 +464,7 @@ function App() {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [form, setForm] = useState({ name: '', location: '', members: '', lead: '' });
+  const [form, setForm] = useState({ name: '', location: '', lead: '', department: '' });
   const [formErrors, setFormErrors] = useState({});
   const [showForm, setShowForm] = useState(false);
   const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem('token'));
@@ -512,7 +512,6 @@ function App() {
     const errors = {};
     if (!form.name.trim()) errors.name = "Team name is required";
     if (!form.location.trim()) errors.location = "Location is required";
-    if (!form.members) errors.members = "Number of members is required";
     if (!form.lead.trim()) errors.lead = "Team lead is required";
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
@@ -523,8 +522,8 @@ function App() {
     fetch("https://9sb0c46a2c.execute-api.us-east-1.amazonaws.com/teams", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ ...form, members: parseInt(form.members) }),
-    }).then(() => { fetchTeams(); setForm({ name: '', location: '', members: '', lead: '' }); setShowForm(false); });
+      body: JSON.stringify({ ...form }),
+    }).then(() => { fetchTeams(); setForm({ name: '', location: '', lead: '', department: '' }); setShowForm(false); });
   };
 
   const handleDelete = (teamName) => {
@@ -696,7 +695,6 @@ function App() {
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}><TextField fullWidth label="Team Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} error={!!formErrors.name} helperText={formErrors.name} /></Grid>
                     <Grid item xs={12} sm={6}><TextField fullWidth label="Location" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} error={!!formErrors.location} helperText={formErrors.location} /></Grid>
-                    <Grid item xs={12} sm={6}><TextField fullWidth label="Number of Members" type="number" value={form.members} onChange={e => setForm({ ...form, members: e.target.value })} error={!!formErrors.members} helperText={formErrors.members} /></Grid>
                     <Grid item xs={12} sm={6}><TextField fullWidth label="Team Lead" value={form.lead} onChange={e => setForm({ ...form, lead: e.target.value })} error={!!formErrors.lead} helperText={formErrors.lead} /></Grid>
                     <Grid item xs={12} sm={6}>
                       <FormControl fullWidth>
