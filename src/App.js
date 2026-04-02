@@ -17,6 +17,8 @@ import PersonIcon from '@mui/icons-material/Person';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import BusinessIcon from '@mui/icons-material/Business';
+import EditIcon from '@mui/icons-material/Edit';
 
 
 const theme = createTheme({
@@ -52,6 +54,7 @@ const theme = createTheme({
   },
 });
 
+const API = 'https://9sb0c46a2c.execute-api.us-east-1.amazonaws.com';
 const MotionCard = motion(Card);
 const MotionBox = motion(Box);
 
@@ -456,18 +459,16 @@ function App() {
   const [showDeptForm, setShowDeptForm] = useState(false);
   const token = localStorage.getItem('token');
 
-  const fetchTeams = () => {
-    fetch("https://9sb0c46a2c.execute-api.us-east-1.amazonaws.com/teams", { headers: { Authorization: `Bearer ${token}` } })
+  const fetchDepartments = () => {
+    fetch(`${API}/departments`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => res.json())
-      .then(data => { setTeams(data.teams || []); setLoading(false); });
+      .then(data => setDepartments(data.departments || []));
   };
 
-  const fetchDepartments = () => {
-    fetch("https://9sb0c46a2c.execute-api.us-east-1.amazonaws.com/departments", {
-        headers: { Authorization: `Bearer ${token}` }
-    })
-    .then(res => res.json())
-    .then(data => setDepartments(data.departments || []));
+  const fetchTeams = () => {
+    fetch(`${API}/teams`, { headers: { Authorization: `Bearer ${token}` } })
+      .then(res => res.json())
+      .then(data => { setTeams(data.teams || []); setLoading(false); });
   };
 
   useEffect(() => { 
@@ -546,6 +547,16 @@ function App() {
             )}
             {role === 'admin' && (
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button color="inherit" variant="outlined"
+                  startIcon={<BusinessIcon />}
+                  onClick={() => setShowDeptForm(true)}
+                  sx={{ mr: 1, borderColor: 'rgba(255,255,255,0.5)', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}>
+                  Departments
+                </Button>
+              </motion.div>
+            )}
+            {role === 'admin' && (
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button color="inherit" startIcon={<AddIcon />} onClick={() => setShowForm(!showForm)} sx={{ mr: 1 }}>
                   {showForm ? 'Cancel' : 'Add Team'}
                 </Button>
@@ -556,6 +567,59 @@ function App() {
             </motion.div>
           </Toolbar>
         </AppBar>
+
+        <Dialog open={showDeptForm} onClose={() => setShowDeptForm(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Manage Departments</DialogTitle>
+          <DialogContent>
+            <Box sx={{ mb: 2, mt: 1 }}>
+              {departments.map(d => (
+                <Box key={d.name} display="flex" justifyContent="space-between" alignItems="center" mb={1}
+                  sx={{ p: 1.5, borderRadius: 2, backgroundColor: '#F0F4FF' }}>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <BusinessIcon fontSize="small" sx={{ color: '#6C63FF' }} />
+                    <Typography fontWeight={600}>{d.name}</Typography>
+                  </Box>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Chip
+                      label={`${teams.filter(t => t.department === d.name).length} teams`}
+                      size="small" color="primary" variant="outlined"
+                    />
+                    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                      <Button size="small" color="error" variant="contained"
+                        sx={{ boxShadow: '0 4px 12px rgba(255,0,0,0.2)' }}
+                        onClick={() => {
+                          fetch(`${API}/departments/${d.name}`, {
+                            method: 'DELETE', headers: { Authorization: `Bearer ${token}` }
+                          }).then(() => fetchDepartments());
+                        }}>
+                        Delete
+                      </Button>
+                    </motion.div>
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+            <TextField fullWidth label="New Department Name" value={newDeptName}
+              onChange={e => setNewDeptName(e.target.value)} />
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setShowDeptForm(false)}>Close</Button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button variant="contained"
+                sx={{ background: 'linear-gradient(135deg, #6C63FF, #FF6584)', boxShadow: '0 4px 12px rgba(108,99,255,0.4)' }}
+                onClick={() => {
+                  if (!newDeptName.trim()) return;
+                  fetch(`${API}/departments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ name: newDeptName })
+                  }).then(() => { fetchDepartments(); setNewDeptName(''); });
+                }}>
+                Add Department
+              </Button>
+            </motion.div>
+          </DialogActions>
+        </Dialog>
 
         <Container maxWidth="lg" sx={{ mt: 4 }}>
           <AnimatePresence>
@@ -573,6 +637,17 @@ function App() {
                     <Grid item xs={12} sm={6}><TextField fullWidth label="Location" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} error={!!formErrors.location} helperText={formErrors.location} /></Grid>
                     <Grid item xs={12} sm={6}><TextField fullWidth label="Number of Members" type="number" value={form.members} onChange={e => setForm({ ...form, members: e.target.value })} error={!!formErrors.members} helperText={formErrors.members} /></Grid>
                     <Grid item xs={12} sm={6}><TextField fullWidth label="Team Lead" value={form.lead} onChange={e => setForm({ ...form, lead: e.target.value })} error={!!formErrors.lead} helperText={formErrors.lead} /></Grid>
+                    <Grid item xs={12} sm={6}>
+                      <FormControl fullWidth>
+                        <InputLabel>Department</InputLabel>
+                        <Select value={form.department || ''} label="Department"
+                          onChange={e => setForm({ ...form, department: e.target.value })}>
+                          {departments.map(d => (
+                            <MenuItem key={d.name} value={d.name}>{d.name}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
                     <Grid item xs={12} sm={6}>
                       <FormControl fullWidth>
                         <InputLabel>Department</InputLabel>
@@ -609,6 +684,32 @@ function App() {
               <StatCard value={teams.filter(t => t.location === 'Remote').length} label="Remote Teams" color="#4CAF50" />
             </Grid>
           </Grid>
+
+          {departments.length > 0 && (
+            <Grid container spacing={2} sx={{ mb: 3 }}>
+              {departments.map(d => (
+                <Grid item xs={12} sm={6} md={4} key={d.name}>
+                  <MotionCard elevation={4}
+                    whileHover={{ y: -4, boxShadow: '0 12px 40px rgba(108,99,255,0.2)' }}
+                    transition={{ duration: 0.2 }}
+                    onClick={() => setSelectedDept(selectedDept === d.name ? 'All' : d.name)}
+                    sx={{ cursor: 'pointer', p: 2, border: selectedDept === d.name ? '2px solid #6C63FF' : '1px solid rgba(108,99,255,0.1)' }}
+                  >
+                    <Box display="flex" alignItems="center" gap={1} mb={1}>
+                      <BusinessIcon sx={{ color: '#6C63FF' }} />
+                      <Typography fontWeight={700} color="primary">{d.name}</Typography>
+                    </Box>
+                    <Box display="flex" gap={1}>
+                      <Chip label={`${teams.filter(t => t.department === d.name).length} Teams`} size="small"
+                        sx={{ background: 'linear-gradient(135deg, #6C63FF, #FF6584)', color: 'white' }} />
+                      <Chip label={`${teams.filter(t => t.department === d.name).reduce((s, t) => s + (t.members || 0), 0)} Members`}
+                        size="small" variant="outlined" color="primary" />
+                    </Box>
+                  </MotionCard>
+                </Grid>
+              ))}
+            </Grid>
+          )}
 
           <TextField fullWidth placeholder="Search by team name or location..."
             value={search} onChange={e => setSearch(e.target.value)}
