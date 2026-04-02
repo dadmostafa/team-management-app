@@ -361,7 +361,7 @@ function TeamDetailPage({ team, role, onBack }) {
   );
 }
 
-function TeamCard({ team, onDelete, onEdit, onViewMembers, role }) {
+function TeamCard({ team, onDelete, onEdit, onViewMembers, role, onAssignDept }) {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({ ...team });
   const handleSave = () => { onEdit(team.name, form); setEditing(false); };
@@ -422,20 +422,37 @@ function TeamCard({ team, onDelete, onEdit, onViewMembers, role }) {
           <Typography variant="body2" color="text.secondary">{team.lead}</Typography>
         </Box>
       </CardContent>
-      <CardActions sx={{ px: 2, pb: 2 }}>
+      <CardActions sx={{ px: 2, pb: 2, flexWrap: 'wrap', gap: 1 }}>
         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
           <Button size="small" variant="contained"
-            sx={{ background: 'linear-gradient(135deg, #6C63FF, #FF6584)', mr: 1 }}
+            sx={{ background: 'linear-gradient(135deg, #6C63FF, #FF6584)', boxShadow: '0 4px 12px rgba(108,99,255,0.4)' }}
             onClick={() => onViewMembers(team)}>
             View Team
           </Button>
         </motion.div>
         {role === 'admin' && <>
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button size="small" variant="outlined" color="primary" onClick={() => setEditing(true)} sx={{ mr: 1 }}>Edit</Button>
+            <Button size="small" variant="outlined" color="primary"
+              sx={{ boxShadow: '0 2px 8px rgba(108,99,255,0.2)' }}
+              onClick={() => setEditing(true)}>
+              Edit
+            </Button>
           </motion.div>
           <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button size="small" color="error" startIcon={<DeleteIcon />} onClick={() => onDelete(team.name)}>Delete</Button>
+            <Button size="small" variant="contained" color="error"
+              startIcon={<DeleteIcon />}
+              sx={{ boxShadow: '0 4px 12px rgba(255,0,0,0.2)' }}
+              onClick={() => onDelete(team.name)}>
+              Delete
+            </Button>
+          </motion.div>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button size="small" variant="outlined" color="primary"
+              startIcon={<BusinessIcon />}
+              sx={{ boxShadow: '0 2px 8px rgba(108,99,255,0.2)' }}
+              onClick={() => onAssignDept(team)}>
+              {team.department ? 'Change Dept' : 'Add to Dept'}
+            </Button>
           </motion.div>
         </>}
       </CardActions>
@@ -457,6 +474,8 @@ function App() {
   const [selectedDept, setSelectedDept] = useState('All');
   const [newDeptName, setNewDeptName] = useState('');
   const [showDeptForm, setShowDeptForm] = useState(false);
+  const [assignDeptTeam, setAssignDeptTeam] = useState(null);
+  const [assignDeptValue, setAssignDeptValue] = useState('');
   const token = localStorage.getItem('token');
 
   const fetchDepartments = () => {
@@ -624,6 +643,45 @@ function App() {
           </DialogActions>
         </Dialog>
 
+        <Dialog open={!!assignDeptTeam} onClose={() => setAssignDeptTeam(null)} maxWidth="sm" fullWidth>
+          <DialogTitle>Assign Department — {assignDeptTeam?.name}</DialogTitle>
+          <DialogContent>
+            <Typography color="text.secondary" mb={2}>
+              Current department: <strong>{assignDeptTeam?.department || 'None'}</strong>
+            </Typography>
+            <FormControl fullWidth sx={{ mt: 1 }}>
+              <InputLabel>Select Department</InputLabel>
+              <Select value={assignDeptValue} label="Select Department"
+                onChange={e => setAssignDeptValue(e.target.value)}>
+                {departments.map(d => (
+                  <MenuItem key={d.name} value={d.name}>{d.name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setAssignDeptTeam(null)}>Cancel</Button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button variant="contained"
+                sx={{ background: 'linear-gradient(135deg, #6C63FF, #FF6584)', boxShadow: '0 4px 12px rgba(108,99,255,0.4)' }}
+                onClick={() => {
+                  if (!assignDeptValue) return;
+                  fetch(`${API}/teams/${assignDeptTeam.name}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ ...assignDeptTeam, department: assignDeptValue })
+                  }).then(() => {
+                    fetchTeams();
+                    setAssignDeptTeam(null);
+                    setAssignDeptValue('');
+                  });
+                }}>
+                Assign
+              </Button>
+            </motion.div>
+          </DialogActions>
+        </Dialog>
+
         <Container maxWidth="lg" sx={{ mt: 4 }}>
           <AnimatePresence>
             {showForm && role === 'admin' && (
@@ -732,7 +790,7 @@ function App() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.3, delay: index * 0.1 }}
                     >
-                      <TeamCard team={team} onDelete={handleDelete} onEdit={handleEdit} onViewMembers={setSelectedTeam} role={role} />
+                      <TeamCard team={team} onDelete={handleDelete} onEdit={handleEdit} onViewMembers={setSelectedTeam} role={role} onAssignDept={team => { setAssignDeptTeam(team); setAssignDeptValue(team.department || ''); }} />
                     </MotionBox>
                   </Grid>
                 ))}
