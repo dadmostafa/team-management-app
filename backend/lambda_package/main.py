@@ -295,17 +295,24 @@ def delete_achievement(team_name: str, title: str, current_user: dict = Depends(
 @app.post("/teams/{team_name}/members", status_code=201)
 def add_member(team_name: str, member: Member, current_user: dict = Depends(get_current_user)):
     if current_user["role"] not in ["admin", "manager", "contributor"]:
-        raise HTTPException(status_code=403, detail={"error": True, "message": "Not authorized to create or update"})
+        raise HTTPException(status_code=403, detail={"error": True, "message": "Not authorized to add members"})
     try:
         if mongodb_available:
             teams_collection.update_one(
                 {"name": team_name},
                 {"$push": {"team_members": member.dict()}}
             )
+            # Recalculate and update member count
+            team = teams_collection.find_one({"name": team_name})
+            if team:
+                count = len(team.get("team_members", []))
+                teams_collection.update_one(
+                    {"name": team_name},
+                    {"$set": {"members": count}}
+                )
             return {"message": "Member added successfully"}
     except:
         pass
-    # Fallback to in-memory
     if team_name not in team_members_storage:
         team_members_storage[team_name] = []
     team_members_storage[team_name].append(member.dict())
@@ -333,13 +340,19 @@ def delete_member(team_name: str, member_name: str, current_user: dict = Depends
                 {"name": team_name},
                 {"$pull": {"team_members": {"name": member_name}}}
             )
-            return {"message": "Member deleted successfully"}
+            # Recalculate and update member count
+            team = teams_collection.find_one({"name": team_name})
+            if team:
+                count = len(team.get("team_members", []))
+                teams_collection.update_one(
+                    {"name": team_name},
+                    {"$set": {"members": count}}
+                )
+            return
     except:
         pass
-    # Fallback to in-memory
     if team_name in team_members_storage:
         team_members_storage[team_name] = [m for m in team_members_storage[team_name] if m["name"] != member_name]
-    return {"message": "Member deleted successfully"}
 
 @app.get("/departments")
 def get_departments(current_user: dict = Depends(get_current_user)):
