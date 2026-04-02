@@ -152,6 +152,25 @@ def get_teams(current_user: dict = Depends(get_current_user)):
         pass
     return {"teams": in_memory_teams}
 
+@app.get("/teams/{team_name}")
+def get_team(team_name: str, current_user: dict = Depends(get_current_user)):
+    try:
+        if mongodb_available:
+            team = teams_collection.find_one({"name": team_name}, {"_id": 0})
+            if team:
+                team["members"] = len(team.get("team_members", []))
+                return {"team": team}
+    except:
+        pass
+    # Fallback to in-memory
+    team = next((t for t in in_memory_teams if t["name"] == team_name), None)
+    if not team:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": True, "message": f"Team '{team_name}' not found"}
+        )
+    return {"team": team}
+
 @app.post("/teams", status_code=201)
 def create_team(team: Team, current_user: dict = Depends(get_current_user)):
     if current_user["role"] not in ["admin", "manager", "contributor"]:

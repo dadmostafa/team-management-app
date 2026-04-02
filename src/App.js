@@ -60,6 +60,10 @@ function LoginPage({ onLogin }) {
   const [error, setError] = useState('');
 
   const handleLogin = () => {
+    if (!username.trim() || !password.trim()) {
+      setError("Username and password are required");
+      return;
+    }
     const formData = new FormData();
     formData.append('username', username);
     formData.append('password', password);
@@ -419,6 +423,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [form, setForm] = useState({ name: '', location: '', members: '', lead: '' });
+  const [formErrors, setFormErrors] = useState({});
   const [showForm, setShowForm] = useState(false);
   const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem('token'));
   const [role, setRole] = useState(localStorage.getItem('role') || '');
@@ -444,7 +449,18 @@ function App() {
     setSelectedTeam(null);
   };
 
+  const validateTeamForm = () => {
+    const errors = {};
+    if (!form.name.trim()) errors.name = "Team name is required";
+    if (!form.location.trim()) errors.location = "Location is required";
+    if (!form.members) errors.members = "Number of members is required";
+    if (!form.lead.trim()) errors.lead = "Team lead is required";
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleAdd = () => {
+    if (!validateTeamForm()) return;
     fetch("https://9sb0c46a2c.execute-api.us-east-1.amazonaws.com/teams", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -506,10 +522,10 @@ function App() {
                 <Card elevation={0} sx={{ p: 3, mb: 4 }}>
                   <Typography variant="h6" mb={2}>New Team</Typography>
                   <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}><TextField fullWidth label="Team Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></Grid>
-                    <Grid item xs={12} sm={6}><TextField fullWidth label="Location" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} /></Grid>
-                    <Grid item xs={12} sm={6}><TextField fullWidth label="Number of Members" type="number" value={form.members} onChange={e => setForm({ ...form, members: e.target.value })} /></Grid>
-                    <Grid item xs={12} sm={6}><TextField fullWidth label="Team Lead" value={form.lead} onChange={e => setForm({ ...form, lead: e.target.value })} /></Grid>
+                    <Grid item xs={12} sm={6}><TextField fullWidth label="Team Name" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} error={!!formErrors.name} helperText={formErrors.name} /></Grid>
+                    <Grid item xs={12} sm={6}><TextField fullWidth label="Location" value={form.location} onChange={e => setForm({ ...form, location: e.target.value })} error={!!formErrors.location} helperText={formErrors.location} /></Grid>
+                    <Grid item xs={12} sm={6}><TextField fullWidth label="Number of Members" type="number" value={form.members} onChange={e => setForm({ ...form, members: e.target.value })} error={!!formErrors.members} helperText={formErrors.members} /></Grid>
+                    <Grid item xs={12} sm={6}><TextField fullWidth label="Team Lead" value={form.lead} onChange={e => setForm({ ...form, lead: e.target.value })} error={!!formErrors.lead} helperText={formErrors.lead} /></Grid>
                     <Grid item xs={12}>
                       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} style={{ display: 'inline-block' }}>
                         <Button variant="contained" onClick={handleAdd} sx={{ background: 'linear-gradient(135deg, #6C63FF, #FF6584)' }}>Save Team</Button>
