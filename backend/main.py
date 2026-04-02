@@ -1,4 +1,5 @@
 import os
+import hashlib
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
@@ -7,10 +8,14 @@ from fastapi.exceptions import RequestValidationError
 from pymongo import MongoClient
 from pydantic import BaseModel
 from jose import JWTError, jwt
-from passlib.context import CryptContext
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 from datetime import datetime, timedelta
 import certifi
+
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def verify_password(plain, hashed):
+    return hashlib.sha256(plain.encode()).hexdigest() == hashed
 
 
 
@@ -46,17 +51,10 @@ app.add_middleware(
 )
 
 # MongoDB connection with lazy initialization
-IS_LOCAL = os.environ.get("IS_LOCAL", "true").lower() == "true"
-
-if IS_LOCAL:
-    MONGO_URI = "mongodb+srv://mostafa_CITI:X0n8BpLFE1xF821a@team-management-cluster.zegijnq.mongodb.net/?appName=team-management-cluster"
-else:
-    MONGO_HOST = os.environ.get("MONGO_HOST", "")
-    MONGO_PORT = os.environ.get("MONGO_PORT", "27017")
-    MONGO_NAME = os.environ.get("MONGO_NAME", "")
-    MONGO_USER = os.environ.get("MONGO_USER", "")
-    MONGO_PASS = os.environ.get("MONGO_PASS", "")
-    MONGO_URI = f"mongodb://{MONGO_USER}:{MONGO_PASS}@{MONGO_HOST}:{MONGO_PORT}/{MONGO_NAME}?tls=true&tlsAllowInvalidCertificates=true&retryWrites=false"
+MONGO_URI = os.environ.get(
+    "MONGO_URI",
+    "mongodb+srv://mostafa_CITI:X0n8BpLFE1xF821a@team-management-cluster.zegijnq.mongodb.net/?appName=team-management-cluster"
+)
 
 client = MongoClient(
     MONGO_URI,
@@ -110,26 +108,10 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 120
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 USERS = {
-    "admin": {
-        "username": "admin",
-        "password": pwd_context.hash("admin123"),
-        "role": "admin"
-    },
-    "manager": {
-        "username": "manager",
-        "password": pwd_context.hash("manager123"),
-        "role": "manager"
-    },
-    "contributor": {
-        "username": "contributor",
-        "password": pwd_context.hash("contributor123"),
-        "role": "contributor"
-    },
-    "viewer": {
-        "username": "viewer",
-        "password": pwd_context.hash("viewer123"),
-        "role": "viewer"
-    }
+    "admin": {"username": "admin", "password": hash_password("admin123"), "role": "admin"},
+    "manager": {"username": "manager", "password": hash_password("manager123"), "role": "manager"},
+    "contributor": {"username": "contributor", "password": hash_password("contributor123"), "role": "contributor"},
+    "viewer": {"username": "viewer", "password": hash_password("viewer123"), "role": "viewer"}
 }
 
 class Team(BaseModel):
@@ -156,7 +138,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
 @app.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user = USERS.get(form_data.username)
-    if not user or not pwd_context.verify(form_data.password, user["password"]):
+    if not user or not verify_password(form_data.password, user["password"]):
         raise HTTPException(status_code=401, detail={"error": True, "message": "Invalid credentials"})
     token = create_token({"sub": user["username"], "role": user["role"]})
     return {"access_token": token, "token_type": "bearer", "role": user["role"]}
