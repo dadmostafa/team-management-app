@@ -163,7 +163,7 @@ function TeamDetailPage({ team, role, onBack }) {
   const fetchAchievements = () => {
     fetch(`https://9sb0c46a2c.execute-api.us-east-1.amazonaws.com/teams/${team.name}/achievements`, {
       headers: { Authorization: `Bearer ${token}` }
-    }).then(res => res.json()).then(data => setAchievements(data.achievements || []));
+    }).then(res => res.json()).then(data => { console.log('achievements:', data); setAchievements(data.achievements || []); });
   };
 
   useEffect(() => { fetchMembers(); fetchAchievements(); }, []);
@@ -212,7 +212,7 @@ function TeamDetailPage({ team, role, onBack }) {
               startIcon={<EmojiEventsIcon />}>
               Achievements
             </Button>
-            {role === 'admin' && activeTab === 'members' && members.length > 0 && (
+            {['admin', 'manager'].includes(role) && activeTab === 'members' && members.length > 0 && (
               <Button color="inherit" onClick={() => {
                 const newLead = prompt('Enter new team lead name:');
                 if (newLead) {
@@ -226,10 +226,10 @@ function TeamDetailPage({ team, role, onBack }) {
                 Change Lead
               </Button>
             )}
-            {role === 'admin' && activeTab === 'members' && (
+            {['admin', 'manager', 'contributor'].includes(role) && activeTab === 'members' && (
               <Button color="inherit" startIcon={<AddIcon />} onClick={() => setShowForm(!showForm)}>Add Member</Button>
             )}
-            {role === 'admin' && activeTab === 'achievements' && (
+            {['admin', 'manager', 'contributor'].includes(role) && activeTab === 'achievements' && (
               <Button color="inherit" startIcon={<AddIcon />} onClick={() => setShowAchieveForm(!showAchieveForm)}>Add Achievement</Button>
             )}
           </Toolbar>
@@ -250,7 +250,7 @@ function TeamDetailPage({ team, role, onBack }) {
 
           {activeTab === 'members' && (
             <MotionBox initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-              {showForm && role === 'admin' && (
+              {showForm && ['admin', 'manager', 'contributor'].includes(role) && (
                 <Card elevation={0} sx={{ p: 3, mb: 4 }}>
                   <Typography variant="h6" mb={2}>New Member</Typography>
                   <Grid container spacing={2}>
@@ -305,7 +305,7 @@ function TeamDetailPage({ team, role, onBack }) {
 
           {activeTab === 'achievements' && (
             <MotionBox initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
-              {showAchieveForm && role === 'admin' && (
+              {showAchieveForm && ['admin', 'manager', 'contributor'].includes(role) && (
                 <Card elevation={0} sx={{ p: 3, mb: 4 }}>
                   <Typography variant="h6" mb={2}>New Achievement</Typography>
                   <Grid container spacing={2}>
@@ -476,12 +476,29 @@ function App() {
   const [showDeptForm, setShowDeptForm] = useState(false);
   const [assignDeptTeam, setAssignDeptTeam] = useState(null);
   const [assignDeptValue, setAssignDeptValue] = useState('');
+  const [topTeam, setTopTeam] = useState(null);
   const token = localStorage.getItem('token');
 
   const fetchDepartments = () => {
     fetch(`${API}/departments`, { headers: { Authorization: `Bearer ${token}` } })
       .then(res => res.json())
       .then(data => setDepartments(data.departments || []));
+  };
+
+  const fetchTopAchievements = () => {
+    Promise.all(
+      teams.map(t =>
+        fetch(`${API}/teams/${t.name}/achievements`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }).then(r => r.json()).then(data => ({
+          name: t.name,
+          count: (data.achievements || []).length
+        }))
+      )
+    ).then(results => {
+      const sorted = results.sort((a, b) => b.count - a.count);
+      setTopTeam(sorted[0]);
+    });
   };
 
   const fetchTeams = () => {
@@ -496,6 +513,10 @@ function App() {
         fetchDepartments();
     }
   }, [loggedIn]);
+
+  useEffect(() => {
+    if (teams.length > 0) fetchTopAchievements();
+  }, [teams]);
 
   const handleLogin = (userRole) => { setRole(userRole); setLoggedIn(true); };
 
@@ -576,7 +597,7 @@ function App() {
                 </Button>
               </motion.div>
             )}
-            {role === 'admin' && (
+            {['admin', 'manager'].includes(role) && (
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button color="inherit" startIcon={<AddIcon />} onClick={() => setShowForm(!showForm)} sx={{ mr: 1 }}>
                   {showForm ? 'Cancel' : 'Add Team'}
@@ -683,7 +704,7 @@ function App() {
 
         <Container maxWidth="xl" sx={{ mt: 4, px: { xs: 2, md: 4 } }}>
           <AnimatePresence>
-            {showForm && role === 'admin' && (
+            {showForm && ['admin', 'manager'].includes(role) && (
               <MotionBox
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
@@ -708,16 +729,39 @@ function App() {
           </AnimatePresence>
 
           <Grid container spacing={3} sx={{ mb: 4 }} justifyContent="center">
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={3}>
               <StatCard value={teams.length} label="Total Teams" color="#6C63FF" />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={3}>
               <StatCard value={teams.reduce((sum, t) => sum + (t.members || 0), 0)} label="Total Members" color="#6C63FF" />
             </Grid>
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={3}>
               <StatCard value={teams.filter(t => t.location === 'Remote').length} label="Remote Teams" color="#4CAF50" />
             </Grid>
+            <Grid item xs={12} sm={3}>
+              <StatCard value={departments.length} label="Departments" color="#FF9800" />
+            </Grid>
           </Grid>
+
+          {topTeam && topTeam.count > 0 && (
+            <MotionCard elevation={4}
+              whileHover={{ y: -4, boxShadow: '0 12px 40px rgba(108,99,255,0.2)' }}
+              transition={{ duration: 0.2 }}
+              sx={{ p: 3, mb: 4, background: 'linear-gradient(135deg, rgba(108,99,255,0.05), rgba(255,101,132,0.05))' }}
+            >
+              <Box display="flex" alignItems="center" gap={2}>
+                <EmojiEventsIcon sx={{ fontSize: 48, color: '#FFD700' }} />
+                <Box>
+                  <Typography variant="h6" fontWeight="800" color="primary">
+                    🏆 Most Achievements — {topTeam.name}
+                  </Typography>
+                  <Typography color="text.secondary">
+                    {topTeam.count} achievement{topTeam.count !== 1 ? 's' : ''} — leading the board!
+                  </Typography>
+                </Box>
+              </Box>
+            </MotionCard>
+          )}
 
           {departments.length > 0 && (
             <Grid container spacing={2} sx={{ mb: 3 }} justifyContent="center">
