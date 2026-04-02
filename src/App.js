@@ -739,7 +739,7 @@ function App() {
               <StatCard value={teams.filter(t => t.location === 'Remote').length} label="Remote Teams" color="#4CAF50" />
             </Grid>
             <Grid item xs={12} sm={3}>
-              <StatCard value={departments.length} label="Departments" color="#FF9800" />
+              <StatCard value={departments.length} label="Total Departments" color="#FF9800" />
             </Grid>
           </Grid>
 
